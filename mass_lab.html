@@ -17,7 +17,8 @@
     <style>
         body {
             font-family: 'Rubik', sans-serif;
-            background: radial-gradient(circle at 50% 10%, #f8fafc 0%, #cbd5e1 100%);
+            background: url('lab_bg.jpg') center/cover no-repeat;
+            background-color: #cbd5e1; /* צבע גיבוי למקרה שהתמונה לא נטענת */
             margin: 0;
             overflow: hidden;
             height: 100vh;
@@ -28,7 +29,7 @@
 
         /* Utility classes ported from React */
         .scale-lcd { text-shadow: 0 0 8px rgba(0, 255, 0, 0.7); }
-        .hud-panel { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .hud-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
         .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .btn-primary:hover:not(:disabled) { background-color: #1e293b; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); }
         .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
@@ -83,7 +84,7 @@
     <div class="absolute bottom-0 left-0 w-full h-[35%] z-0" style="background: linear-gradient(to bottom, #78350f, #451a03); border-top: 8px solid #381402; box-shadow: inset 0 40px 60px rgba(0,0,0,0.5);"></div>
 
     <!-- Top Header -->
-    <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/80 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
+    <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
         <i data-lucide="flask-conical" class="w-8 h-8 text-[#0f172a]"></i>
         <div>
           <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת חוק שימור המסה</h1>
@@ -98,7 +99,7 @@
         <div id="hud-panel" class="absolute top-6 right-6 w-[340px] hud-panel rounded-2xl z-50 flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] transition-shadow">
             
             <!-- HUD Header (Drag Handle) -->
-            <div id="hud-header" class="flex justify-between items-center border-b-2 border-slate-200/60 px-6 py-4 cursor-grab bg-white/40 rounded-t-2xl hover:bg-white/60 transition-colors">
+            <div id="hud-header" class="flex justify-between items-center border-b-2 border-slate-200/60 px-6 py-4 cursor-grab bg-white/60 rounded-t-2xl hover:bg-white/80 transition-colors">
                 <div class="flex items-center gap-2 pointer-events-none">
                     <i data-lucide="grip-horizontal" class="text-slate-500 w-5 h-5"></i>
                     <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן מעבדה</h2>
@@ -208,7 +209,10 @@
 
                     <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
                         <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
-                        <p class="text-xs text-slate-600 mb-3 font-medium">ראינו שהנפח גדל למרות שהמסה נשמרה. למה זה קרה?</p>
+                        <p class="text-xs text-slate-600 mb-3 font-medium leading-relaxed">
+                            במדידה הראשונה נפח ה<span id="hud-q2-mat" class="font-bold"></span> היה <span id="hud-q2-vol1" class="font-bold"></span> סמ״ק ואילו במדידה השניה היה <span id="hud-q2-vol2" class="font-bold"></span> סמ״ק.<br/>
+                            כיצד ניתן להסביר את העליה בנפח?
+                        </p>
                         <div class="flex flex-col gap-2">
                             <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
                                 <input type="radio" name="q2" value="distance" onchange="app.setQ2('distance')" class="w-4 h-4 text-blue-600" /> 
@@ -247,9 +251,10 @@
         <!-- ================= SCENE ITEMS ================= -->
         
         <!-- --- STEP 1: Solid --- -->
-        <div id="scene-step-1" class="relative w-full max-w-4xl h-full flex flex-col justify-end pb-[12vh] items-center">
+        <!-- justify-end is used here to push items to the left in RTL mode -->
+        <div id="scene-step-1" class="relative w-full max-w-5xl h-full flex flex-col justify-end pb-[12vh] items-center">
             
-            <div class="relative flex justify-center items-end gap-16 sm:gap-24 w-full px-12 z-20">
+            <div class="relative flex justify-end items-end gap-16 sm:gap-24 w-full pl-[15%] pr-4 z-20">
                 
                 <!-- === The Refrigerator === -->
                 <div class="relative flex flex-col items-center">
@@ -337,6 +342,7 @@
         <div id="scene-step-2" class="hidden-el relative w-full max-w-2xl h-full flex flex-col justify-end pb-[12vh] items-center">
             
             <!-- The Bowl & Solid/Liquid (Draggable/Clickable) -->
+            <!-- left-1/2 centers it perfectly in the microwave when inside -->
             <div id="bowl-container" class="absolute transition-all duration-700 z-20 cursor-pointer bottom-[12vh] left-[15%] scale-[1.2] hover:scale-[1.25]" onclick="app.putInMicrowave()">
                 <div id="bowl" class="w-32 h-16 bg-white/20 border-2 border-white/60 rounded-b-[40px] rounded-t-lg backdrop-blur-[4px] shadow-2xl relative flex justify-center items-end pb-1 overflow-hidden">
                     <!-- Solid state inside bowl -->
@@ -351,7 +357,7 @@
             </div>
 
             <!-- Microwave -->
-            <div class="relative z-10 flex flex-col items-center">
+            <div class="relative z-10 flex flex-col items-center w-full">
                 <div id="microwave">
                     <!-- Inside Cavity -->
                     <div id="mw-inside" class="mw-inside"></div>
@@ -794,7 +800,7 @@
                 // STEP 2 RENDER
                 if (s.step === 2 && mat) {
                     const bowlCont = document.getElementById('bowl-container');
-                    bowlCont.className = `absolute transition-all duration-700 z-20 cursor-pointer ${s.itemInMicrowave ? 'bottom-[20vh] left-[48%] -translate-x-1/2 scale-[0.6]' : 'bottom-[12vh] left-[15%] scale-[1.2] hover:scale-[1.25]'}`;
+                    bowlCont.className = `absolute transition-all duration-700 z-20 cursor-pointer ${s.itemInMicrowave ? 'bottom-[22vh] left-[50%] -translate-x-1/2 scale-[0.6]' : 'bottom-[12vh] left-[15%] scale-[1.2] hover:scale-[1.25]'}`;
                     
                     const bowl = document.getElementById('bowl');
                     if(s.isHeating) bowl.classList.add('animate-turntable');
@@ -836,7 +842,11 @@
                     document.getElementById('cylinder-liquid').style.background = mat.liquidColor;
                     document.getElementById('cylinder-val').innerText = mat.liquidVol;
 
-                    // Update HUD Step 3
+                    // Update HUD Step 3 Texts
+                    document.getElementById('hud-q2-mat').innerText = mat.name;
+                    document.getElementById('hud-q2-vol1').innerText = mat.solidVol;
+                    document.getElementById('hud-q2-vol2').innerText = mat.liquidVol;
+
                     document.getElementById('val-mass2').innerText = s.mass2 || '---';
                     const btnMass2 = document.getElementById('btn-update-mass2');
                     btnMass2.disabled = s.mass2 === mat.mass.toString();
