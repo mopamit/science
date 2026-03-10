@@ -17,14 +17,23 @@
     <style>
         body {
             font-family: 'Rubik', sans-serif;
-            background: url('lab_bg.jpg') center/cover no-repeat;
-            background-color: #cbd5e1; /* צבע גיבוי למקרה שהתמונה לא נטענת */
             margin: 0;
             overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
             user-select: none;
+            transition: background 0.5s ease;
+        }
+
+        /* Classes for switching backgrounds */
+        .bg-with-image {
+            background: url('lab_bg.jpg') center/cover no-repeat;
+            background-color: #cbd5e1; /* גיבוי */
+        }
+        
+        .bg-solid {
+            background: radial-gradient(circle at 50% 10%, #f8fafc 0%, #cbd5e1 100%);
         }
 
         /* Utility classes ported from React */
@@ -78,10 +87,10 @@
         .hidden-el { display: none !important; }
     </style>
 </head>
-<body>
+<body id="app-body" class="bg-with-image">
 
-    <!-- Desk Surface -->
-    <div class="absolute bottom-0 left-0 w-full h-[35%] z-0" style="background: linear-gradient(to bottom, #78350f, #451a03); border-top: 8px solid #381402; box-shadow: inset 0 40px 60px rgba(0,0,0,0.5);"></div>
+    <!-- Desk Surface (Hidden on start screen) -->
+    <div id="desk-surface" class="hidden-el absolute bottom-0 left-0 w-full h-[35%] z-0" style="background: linear-gradient(to bottom, #78350f, #451a03); border-top: 8px solid #381402; box-shadow: inset 0 40px 60px rgba(0,0,0,0.5);"></div>
 
     <!-- Top Header -->
     <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
@@ -94,9 +103,26 @@
 
     <!-- Main Container -->
     <main class="w-full h-full relative z-10 flex items-center justify-center">
+
+        <!-- ================= START SCREEN (STEP 0) ================= -->
+        <div id="scene-step-0" class="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl max-w-2xl w-full p-8 text-center animate-fade-in z-50 border border-white/50 m-4">
+            <h2 class="text-3xl font-extrabold text-[#0f172a] mb-6">ברוכים הבאים למעבדה!</h2>
+            <div class="text-right text-slate-700 leading-relaxed space-y-4 mb-8 bg-blue-50/50 p-6 rounded-xl border border-blue-100">
+                <p>בניסוי זה נחקור את <strong>חוק שימור המסה</strong> על ידי התכת חומר ממוצק לנוזל.</p>
+                <h3 class="font-bold text-lg mt-4 mb-2 text-[#0f172a]">מהלך הניסוי:</h3>
+                <ol class="list-decimal list-inside space-y-2 font-medium">
+                    <li>נמדוד מסה ונפח של חומר במצב מוצק.</li>
+                    <li>נתיך את החומר בעזרת מיקרוגל.</li>
+                    <li>נמדוד שוב מסה ונפח של החומר במצב נוזל ונשווה לתוצאות הקודמות.</li>
+                </ol>
+            </div>
+            <button onclick="app.startExperiment()" class="btn-primary px-10 py-4 rounded-xl font-bold text-xl shadow-lg flex items-center gap-2 mx-auto">
+                התחילו בניסוי <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+        </div>
         
         <!-- ================= HUD (Heads Up Display) Panel - Draggable & Collapsible ================= -->
-        <div id="hud-panel" class="absolute top-6 right-6 w-[340px] hud-panel rounded-2xl z-50 flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] transition-shadow">
+        <div id="hud-panel" class="hidden-el absolute top-6 right-6 w-[340px] hud-panel rounded-2xl z-50 flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] transition-shadow">
             
             <!-- HUD Header (Drag Handle) -->
             <div id="hud-header" class="flex justify-between items-center border-b-2 border-slate-200/60 px-6 py-4 cursor-grab bg-white/60 rounded-t-2xl hover:bg-white/80 transition-colors">
@@ -251,10 +277,10 @@
         <!-- ================= SCENE ITEMS ================= -->
         
         <!-- --- STEP 1: Solid --- -->
-        <!-- justify-end is used here to push items to the left in RTL mode -->
-        <div id="scene-step-1" class="relative w-full max-w-5xl h-full flex flex-col justify-end pb-[12vh] items-center">
+        <!-- justify-end is used here to push items to the left in RTL mode. Adjusted padding to move items more left -->
+        <div id="scene-step-1" class="hidden-el relative w-full max-w-5xl h-full flex flex-col justify-end pb-[12vh] items-center">
             
-            <div class="relative flex justify-end items-end gap-16 sm:gap-24 w-full pl-[15%] pr-4 z-20">
+            <div class="relative flex justify-end items-end gap-16 sm:gap-24 w-full pl-[25%] pr-4 z-20">
                 
                 <!-- === The Refrigerator === -->
                 <div class="relative flex flex-col items-center">
@@ -491,7 +517,7 @@
         // Application Logic & State
         const app = {
             state: {
-                step: 1,
+                step: 0, // Changed start step to 0 (Intro Screen)
                 activeMat: null,
                 fridgeOpen: false,
                 itemOnScale: false,
@@ -581,6 +607,10 @@
             },
 
             // --- State Actions ---
+            startExperiment() {
+                this.setState({ step: 1 });
+            },
+
             toggleFridge() {
                 if (!this.state.itemOnScale) {
                     this.setState({ fridgeOpen: !this.state.fridgeOpen });
@@ -679,7 +709,7 @@
                 hud.style.transform = `translate3d(0px, 0px, 0)`;
                 
                 this.setState({
-                    step: 1, activeMat: null, fridgeOpen: false, itemOnScale: false, showRuler: false,
+                    step: 0, activeMat: null, fridgeOpen: false, itemOnScale: false, showRuler: false,
                     mass1: '', vol1: '', q1: '', step1Error: '',
                     itemInMicrowave: false, doorOpen: true, isHeating: false, isMelted: false, timer: 5,
                     mass2: '', vol2: '', q2: '', step3Error: '',
@@ -737,22 +767,44 @@
                 const s = this.state;
                 const mat = s.activeMat ? materialsData[s.activeMat] : null;
 
-                // Handle HUD Toggle Visibility
-                const hudContent = document.getElementById('hud-content');
-                const hudToggleIcon = document.getElementById('hud-toggle-icon');
-                if (s.hudCollapsed) {
-                    hudContent.classList.add('hidden-el');
-                    hudToggleIcon.innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>'; // lucide chevron-up
+                // Handle Background switching based on step
+                const body = document.getElementById('app-body');
+                const deskSurface = document.getElementById('desk-surface');
+                if (s.step === 0) {
+                    body.classList.add('bg-with-image');
+                    body.classList.remove('bg-solid');
+                    deskSurface.classList.add('hidden-el');
                 } else {
-                    hudContent.classList.remove('hidden-el');
-                    hudToggleIcon.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>'; // lucide chevron-down
+                    body.classList.remove('bg-with-image');
+                    body.classList.add('bg-solid');
+                    deskSurface.classList.remove('hidden-el');
                 }
 
-                // Toggle Main HUD and Scenes by Step
-                document.getElementById('hud-step-badge').innerText = `תחנה ${s.step}/4`;
-                [1,2,3,4].forEach(i => {
-                    document.getElementById(`hud-step-${i}`).classList.toggle('hidden-el', s.step !== i);
-                    document.getElementById(`scene-step-${i}`).classList.toggle('hidden-el', s.step !== i);
+                // Handle HUD Toggle Visibility
+                const hudPanel = document.getElementById('hud-panel');
+                const hudContent = document.getElementById('hud-content');
+                const hudToggleIcon = document.getElementById('hud-toggle-icon');
+                
+                if (s.step === 0) {
+                    hudPanel.classList.add('hidden-el'); // Hide HUD completely on step 0
+                } else {
+                    hudPanel.classList.remove('hidden-el');
+                    if (s.hudCollapsed) {
+                        hudContent.classList.add('hidden-el');
+                        hudToggleIcon.innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>'; // lucide chevron-up
+                    } else {
+                        hudContent.classList.remove('hidden-el');
+                        hudToggleIcon.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>'; // lucide chevron-down
+                    }
+                }
+
+                // Toggle Main Scenes by Step
+                if (s.step > 0) document.getElementById('hud-step-badge').innerText = `תחנה ${s.step}/4`;
+                [0,1,2,3,4].forEach(i => {
+                    const stepHud = document.getElementById(`hud-step-${i}`);
+                    if(stepHud) stepHud.classList.toggle('hidden-el', s.step !== i);
+                    const stepScene = document.getElementById(`scene-step-${i}`);
+                    if(stepScene) stepScene.classList.toggle('hidden-el', s.step !== i);
                 });
 
                 // STEP 1 RENDER
