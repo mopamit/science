@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבדת חוק שימור המסה</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: radial-gradient(circle at 50% 10%, #f8fafc 0%, #cbd5e1 100%);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        /* Utility classes ported from React */
+        .scale-lcd { text-shadow: 0 0 8px rgba(0, 255, 0, 0.7); }
+        .hud-panel { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-primary:hover:not(:disabled) { background-color: #1e293b; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-update { background-color: #059669; color: white; transition: all 0.2s; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .btn-update:hover:not(:disabled) { background-color: #047857; }
+        .btn-update:disabled { background-color: #cbd5e1; cursor: not-allowed; color: #64748b;}
+        
+        /* Refrigerator CSS */
+        #fridge { width: 170px; height: 260px; background: #e2e8f0; border: 2px solid #cbd5e1; border-radius: 12px; box-shadow: 0 25px 40px rgba(0,0,0,0.4), inset -5px 0 15px rgba(255,255,255,0.8); display: flex; perspective: 1200px; position: relative; margin-bottom: -15px; }
+        .fridge-inside { position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; background: #f8fafc; border-radius: 6px; box-shadow: inset 0 20px 40px rgba(0,0,0,0.1); z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow: hidden; }
+        .fridge-shelf { width: 100%; height: 6px; background: rgba(203, 213, 225, 0.6); box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 1px solid white; margin-top: auto; }
+        .fridge-door { position: absolute; inset: 0; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 12px; z-index: 20; transform-origin: right; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; box-shadow: inset 0 0 15px rgba(255,255,255,0.9); cursor: pointer; }
+        .fridge-door.open { transform: rotateY(105deg); }
+        .fridge-door:hover { border-color: #94a3b8; }
+        .fridge-handle { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 10px; height: 80px; background: #cbd5e1; border-radius: 5px; box-shadow: inset 1px 0 3px white, 2px 0 5px rgba(0,0,0,0.2); }
+        .fridge-light { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent); pointer-events: none; z-index: 5; }
+
+        /* Microwave CSS */
+        #microwave { width: 300px; height: 180px; background: #e2e8f0; border: 2px solid #cbd5e1; border-radius: 12px; box-shadow: 0 25px 40px rgba(0,0,0,0.4); display: flex; perspective: 1200px; position: relative; }
+        .mw-inside { position: absolute; top: 12px; left: 12px; width: 190px; height: 152px; background: #1e293b; border-radius: 6px; box-shadow: inset 0 20px 40px rgba(0,0,0,0.8); z-index: 1; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+        .mw-door { position: absolute; top: 12px; left: 12px; width: 190px; height: 152px; background: #f1f5f9; border: 2px solid #94a3b8; border-radius: 6px; z-index: 15; transform-origin: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 15px rgba(255,255,255,0.9); cursor: pointer; }
+        .mw-door.open { transform: rotateY(-105deg); }
+        .mw-door:hover { border-color: #64748b; }
+        .mw-window { width: 85%; height: 80%; background: rgba(0,0,0,0.7); border-radius: 4px; border: 2px solid #cbd5e1; }
+        .mw-inside.heating::after { content: ''; position: absolute; inset: 0; background: rgba(241, 196, 15, 0.3); box-shadow: inset 0 0 50px #f1c40f; pointer-events: none; animation: flicker 0.3s infinite alternate; }
+        .mw-panel { position: absolute; right: 12px; top: 12px; width: 75px; height: 152px; display: flex; flex-direction: column; align-items: center; }
+        .mw-display { width: 100%; height: 32px; background: #020617; color: #22c55e; font-family: monospace; text-align: center; line-height: 32px; border-radius: 4px; margin-bottom: 15px; font-size: 1rem; letter-spacing: 2px; box-shadow: inset 0 0 10px rgba(34,197,94,0.3); }
+        .btn-mw { width: 100%; padding: 12px 0; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s, background 0.2s; display: flex; justify-content: center; align-items: center; }
+        .btn-mw:hover:not(:disabled) { background: #dc2626; transform: scale(1.05); }
+        .btn-mw:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
+        @keyframes flicker { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes turntable { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+        .animate-turntable { animation: turntable 4s linear infinite; }
+        
+        /* Realistic Ruler CSS */
+        .ruler { width: 320px; height: 40px; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.9); border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.2), inset 0 1px 3px white; position: relative; display: flex; align-items: flex-end; }
+        .r-tick { position: absolute; bottom: 0; width: 1px; background: #1e293b; height: 10px; }
+        .r-tick.major { height: 20px; width: 2px; }
+        .r-num { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: bold; color: #0f172a; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        /* Custom UI States */
+        .hidden-el { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Desk Surface -->
+    <div class="absolute bottom-0 left-0 w-full h-[35%] z-0" style="background: linear-gradient(to bottom, #78350f, #451a03); border-top: 8px solid #381402; box-shadow: inset 0 40px 60px rgba(0,0,0,0.5);"></div>
+
+    <!-- Top Header -->
+    <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/80 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50">
+        <i data-lucide="flask-conical" class="w-8 h-8 text-[#0f172a]"></i>
+        <div>
+          <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת חוק שימור המסה</h1>
+          <p class="text-xs text-slate-500 font-medium m-0">סביבת חקר וירטואלית</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="w-full h-full relative z-10 flex items-center justify-center">
+        
+        <!-- ================= HUD (Heads Up Display) Panel ================= -->
+        <div class="absolute top-6 right-6 w-[340px] hud-panel rounded-2xl p-6 z-50 flex flex-col max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b-2 border-slate-200 pb-3 mb-5">
+                <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן מעבדה</h2>
+                <div id="hud-step-badge" class="bg-[#0f172a] text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">תחנה 1/4</div>
+            </div>
+          
+            <!-- HUD STEP 1 -->
+            <div id="hud-step-1" class="flex flex-col gap-5 animate-fade-in">
+                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-3 rounded shadow-sm">
+                    <strong>משימה:</strong> פתחו את המקרר, בחרו חומר, הניחו על המשקל ולאחר מכן עדכנו את הנתונים ביומן.
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">מסה (גרם)</label>
+                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                        <div id="val-mass1" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                        <button id="btn-update-mass1" onclick="app.updateMass1()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">נפח (סמ״ק)</label>
+                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                        <div id="val-vol1" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                        <button id="btn-update-vol1" onclick="app.updateVol1()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
+                    <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
+                    <p class="text-xs text-slate-600 mb-3 font-medium">לקראת החימום: מה לדעתך יקרה למסה של החומר כשהוא יהפוך לנוזל?</p>
+                    <div class="flex flex-col gap-2">
+                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                            <input type="radio" name="q1" value="same" onchange="app.setQ1('same')" class="w-4 h-4 text-blue-600 focus:ring-blue-500" /> 
+                            <span class="font-semibold">תישאר זהה</span>
+                        </label>
+                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                            <input type="radio" name="q1" value="increase" onchange="app.setQ1('increase')" class="w-4 h-4" /> 
+                            <span class="font-semibold">תגדל</span>
+                        </label>
+                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                            <input type="radio" name="q1" value="decrease" onchange="app.setQ1('decrease')" class="w-4 h-4" /> 
+                            <span class="font-semibold">תקטן</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="err-step-1" class="hidden-el text-red-500 text-sm font-bold flex items-start gap-1.5 mt-1 bg-red-50 p-2 rounded">
+                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+                    <span id="err-text-1"></span>
+                </div>
+                
+                <button onclick="app.submitStep1()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">המשך להתכה במיקרוגל</button>
+            </div>
+
+            <!-- HUD STEP 2 -->
+            <div id="hud-step-2" class="hidden-el flex flex-col justify-center animate-fade-in text-center py-6">
+                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-4 rounded shadow-sm text-right mb-6">
+                    <strong class="block mb-2 text-base">משימה:</strong>
+                    <ol class="list-decimal list-inside space-y-2 font-medium">
+                        <li>הניחו את קערית ה<span id="hud-mat-name"></span> במיקרוגל.</li>
+                        <li>סגרו את הדלת.</li>
+                        <li>לחצו על כפתור ההפעלה.</li>
+                    </ol>
+                </div>
+                <div id="hud-heating-status" class="hidden-el text-[#0f172a] font-extrabold text-lg animate-pulse bg-slate-200 p-3 rounded-lg">מתיך <span id="hud-heating-name"></span>...</div>
+                
+                <div id="hud-melted-status" class="hidden-el mt-4 animate-fade-in">
+                    <div class="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 text-green-600"></i>
+                    </div>
+                    <p class="font-extrabold text-xl text-slate-800 mb-6">ההתכה הושלמה!</p>
+                    <button onclick="app.goToStep(3)" class="btn-primary w-full p-4 rounded-xl font-bold text-lg shadow-lg">המשך למדידת הנוזל</button>
+                </div>
+            </div>
+
+            <!-- HUD STEP 3 -->
+            <div id="hud-step-3" class="hidden-el flex flex-col gap-5 animate-fade-in">
+                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-3 rounded shadow-sm">
+                    <strong>משימה:</strong> קראו את נתוני המסה מהמשקל ואת נתוני הנפח מהמשורה. לאחר מכן עדכנו ביומן.
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">מסה סופית (גרם)</label>
+                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                        <div id="val-mass2" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                        <button id="btn-update-mass2" onclick="app.updateMass2()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">נפח סופי (סמ״ק)</label>
+                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                        <div id="val-vol2" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                        <button id="btn-update-vol2" onclick="app.updateVol2()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
+                    <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
+                    <p class="text-xs text-slate-600 mb-3 font-medium">ראינו שהנפח גדל למרות שהמסה נשמרה. למה זה קרה?</p>
+                    <div class="flex flex-col gap-2">
+                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                            <input type="radio" name="q2" value="distance" onchange="app.setQ2('distance')" class="w-4 h-4 text-blue-600" /> 
+                            <span class="font-semibold">החלקיקים התרחקו זה מזה</span>
+                        </label>
+                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                            <input type="radio" name="q2" value="added" onchange="app.setQ2('added')" class="w-4 h-4" /> 
+                            <span class="font-semibold">נוספו חלקיקים חדשים</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="err-step-3" class="hidden-el text-red-500 text-sm font-bold flex items-start gap-1.5 mt-1 bg-red-50 p-2 rounded">
+                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+                    <span id="err-text-3"></span>
+                </div>
+                
+                <button onclick="app.submitStep3()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">לסיכום הניסוי</button>
+            </div>
+
+            <!-- HUD STEP 4 -->
+            <div id="hud-step-4" class="hidden-el flex flex-col items-center justify-center py-8 animate-fade-in text-center">
+                <div class="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i data-lucide="check-circle-2" class="w-14 h-14 text-green-600"></i>
+                </div>
+                <h3 class="font-extrabold text-2xl text-[#0f172a]">הניסוי הושלם!</h3>
+                <p class="text-base text-slate-600 mt-3 font-medium">הוכחתם בהצלחה את חוק שימור המסה עבור <span id="hud-final-mat"></span>.</p>
+                <button onclick="app.resetSimulator()" class="mt-10 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-4 rounded-xl w-full flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i> התחלה מחדש
+                </button>
+            </div>
+        </div>
+
+
+        <!-- ================= SCENE ITEMS ================= -->
+        
+        <!-- --- STEP 1: Solid --- -->
+        <div id="scene-step-1" class="relative w-full max-w-4xl h-full flex flex-col justify-end pb-[12vh] items-center">
+            
+            <div class="relative flex justify-center items-end gap-16 sm:gap-24 w-full px-12 z-20">
+                
+                <!-- === The Refrigerator === -->
+                <div class="relative flex flex-col items-center">
+                    <div id="fridge">
+                        <div class="fridge-inside">
+                            <div class="fridge-light"></div>
+                            
+                            <!-- Shelf 1: Butter -->
+                            <div class="flex flex-col items-center w-full mt-3">
+                                <div id="shelf-butter" class="relative cursor-pointer transition-transform hover:scale-105 z-10" onclick="app.selectMaterial('butter')">
+                                    <div class="w-[85px] h-[38px] rounded-[4px] flex items-center justify-center font-bold text-[#555] text-sm text-shadow-sm mb-1.5" 
+                                        style="background: linear-gradient(180deg, #ffe066 0%, #facc15 100%); box-shadow: inset 0px 4px 5px rgba(255,255,255,0.8), -2px 2px 0px #d4af37, -4px 4px 10px rgba(0,0,0,0.3)">
+                                        חמאה
+                                    </div>
+                                </div>
+                                <div class="fridge-shelf"></div>
+                            </div>
+
+                            <!-- Shelf 2: Margarine -->
+                            <div class="flex flex-col items-center w-full mt-4">
+                                <div id="shelf-margarine" class="relative cursor-pointer transition-transform hover:scale-105 z-10" onclick="app.selectMaterial('margarine')">
+                                    <div class="w-[85px] h-[38px] rounded-[4px] flex items-center justify-center font-bold text-[#555] text-sm text-shadow-sm mb-1.5" 
+                                        style="background: linear-gradient(180deg, #fef08a 0%, #fde047 100%); box-shadow: inset 0px 4px 5px rgba(255,255,255,0.8), -2px 2px 0px #c1a830, -4px 4px 10px rgba(0,0,0,0.3)">
+                                        מרגרינה
+                                    </div>
+                                </div>
+                                <div class="fridge-shelf"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fridge Door -->
+                        <div id="fridge-door" class="fridge-door" onclick="app.toggleFridge()">
+                            <div class="fridge-handle"></div>
+                        </div>
+
+                        <!-- Fridge Tooltips -->
+                        <div id="tip-open-fridge" class="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#0f172a] text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30 border-2 border-white/20">
+                            ↓ לחצו לפתיחת המקרר
+                        </div>
+                        
+                        <div id="tip-choose-mat" class="hidden-el absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white/95 text-[#0f172a] font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none border border-slate-200 z-30">
+                            ↓ בחרו חומר להנחה על המשקל
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === The Scale & Ruler === -->
+                <div class="relative flex flex-col items-center gap-8 w-full max-w-[300px]">
+                    
+                    <!-- The Scale -->
+                    <div class="relative w-[220px] h-[70px] rounded-[12px] relative shadow-[0_15px_25px_rgba(0,0,0,0.5),inset_0_2px_5px_white]" style="background: linear-gradient(145deg, #f1f5f9, #cbd5e1)">
+                        <!-- Plate -->
+                        <div class="absolute -top-[18px] left-[35px] w-[150px] h-[18px] rounded-t-[6px] shadow-[0_-3px_8px_rgba(0,0,0,0.3)] flex items-end justify-center" style="background: linear-gradient(to right, #e2e8f0, #94a3b8)">
+                            <div id="scale-item-1" class="hidden-el w-[100px] h-[50px] rounded-[4px] flex items-center justify-center font-bold text-[#555] text-sm text-shadow-sm transform translate-y-[-2px]">
+                                <!-- Name injected via JS -->
+                            </div>
+                        </div>
+                        <!-- Screen -->
+                        <div id="scale-lcd-1" class="absolute bottom-[12px] left-[20px] w-[110px] h-[36px] rounded-[6px] border-2 border-[#334155] flex items-center justify-center font-mono text-xl font-bold scale-lcd" style="background-color: #020617; color: #22c55e; box-shadow: inset 0 0 12px rgba(34, 197, 94, 0.25)">
+                            0.0
+                        </div>
+                    </div>
+
+                    <!-- Ruler Button / Display -->
+                    <div class="relative flex flex-col items-center mt-4 min-h-[100px]">
+                        <button id="btn-show-ruler" onclick="app.showRuler()" class="btn-primary px-6 py-3 rounded-xl font-bold text-lg shadow-[0_10px_20px_rgba(0,0,0,0.3)]" disabled>
+                            מדידת נפח
+                        </button>
+                        
+                        <div id="ruler-display" class="hidden-el flex flex-col items-center animate-fade-in relative z-30 bg-black/10 p-4 rounded-2xl backdrop-blur-sm border border-white/20">
+                            <div class="bg-[#0f172a] text-white px-4 py-1.5 rounded-full text-sm font-extrabold mb-3 shadow-lg">מדידת נפח</div>
+                            <div class="ruler mx-auto" id="ruler-ticks">
+                                <!-- Generated by JS -->
+                            </div>
+                            <div class="mt-4 font-mono text-2xl font-bold text-white bg-black/60 px-5 py-2 rounded-xl shadow-inner border border-white/10">
+                                <span id="ruler-vol-val"></span> <span class="text-sm">סמ״ק</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- STEP 2: Microwave Melting --- -->
+        <div id="scene-step-2" class="hidden-el relative w-full max-w-2xl h-full flex flex-col justify-end pb-[12vh] items-center">
+            
+            <!-- The Bowl & Solid/Liquid (Draggable/Clickable) -->
+            <div id="bowl-container" class="absolute transition-all duration-700 z-20 cursor-pointer bottom-[12vh] left-[15%] scale-[1.2] hover:scale-[1.25]" onclick="app.putInMicrowave()">
+                <div id="bowl" class="w-32 h-16 bg-white/20 border-2 border-white/60 rounded-b-[40px] rounded-t-lg backdrop-blur-[4px] shadow-2xl relative flex justify-center items-end pb-1 overflow-hidden">
+                    <!-- Solid state inside bowl -->
+                    <div id="bowl-solid" class="w-16 h-10 rounded-[4px] transition-all duration-[4000ms] origin-bottom scale-y-100 opacity-100"></div>
+                    <!-- Liquid state inside bowl -->
+                    <div id="bowl-liquid" class="absolute bottom-0 w-full rounded-b-[40px] transition-all duration-[4000ms] h-0"></div>
+                </div>
+                
+                <div id="tip-put-mw" class="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white/95 text-[#0f172a] font-extrabold px-4 py-1.5 rounded-full shadow-xl text-sm animate-bounce pointer-events-none border border-slate-200">
+                    ↓ הניחו במיקרוגל
+                </div>
+            </div>
+
+            <!-- Microwave -->
+            <div class="relative z-10 flex flex-col items-center">
+                <div id="microwave">
+                    <!-- Inside Cavity -->
+                    <div id="mw-inside" class="mw-inside"></div>
+                    
+                    <!-- Door -->
+                    <div id="mw-door" class="mw-door open" onclick="app.toggleMwDoor()">
+                        <div class="mw-window"></div>
+                    </div>
+                    
+                    <div id="tip-close-mw" class="hidden-el absolute -top-14 left-[100px] -translate-x-1/2 whitespace-nowrap text-white font-extrabold text-sm animate-bounce bg-[#0f172a] px-4 py-2 rounded-full shadow-xl pointer-events-none z-30 border-2 border-white/20">
+                        ↓ לחצו לסגירת הדלת
+                    </div>
+                    
+                    <!-- Control Panel -->
+                    <div class="mw-panel">
+                        <div id="mw-timer" class="mw-display">00:05</div>
+                        <button id="btn-start-mw" class="btn-mw" onclick="app.startMicrowave()" disabled>
+                            <i data-lucide="play" class="w-5 h-5 ml-1" fill="currentColor"></i> הפעל
+                        </button>
+                        
+                        <div id="tip-start-mw" class="hidden-el absolute -bottom-10 right-0 whitespace-nowrap text-white font-extrabold text-sm animate-bounce bg-[#0f172a] px-3 py-1.5 rounded-full shadow-xl z-30 border border-white/20">
+                            ↑ לחצו להפעלה
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- STEP 3: Liquid --- -->
+        <div id="scene-step-3" class="hidden-el relative w-full max-w-2xl h-full flex flex-col justify-end pb-[12vh] items-center">
+            <div class="relative flex justify-center items-end w-full z-20">
+                
+                <!-- Scale with Cylinder -->
+                <div class="w-[220px] h-[70px] rounded-[12px] relative shadow-[0_15px_25px_rgba(0,0,0,0.5),inset_0_2px_5px_white]" style="background: linear-gradient(145deg, #f1f5f9, #cbd5e1)">
+                    <!-- Plate -->
+                    <div class="absolute -top-[18px] left-[35px] w-[150px] h-[18px] rounded-t-[6px] shadow-[0_-3px_8px_rgba(0,0,0,0.3)] flex items-end justify-center" style="background: linear-gradient(to right, #e2e8f0, #94a3b8)">
+                        
+                        <!-- Cylinder (Measuring tube) -->
+                        <div class="w-[80px] h-[220px] bg-white/10 backdrop-blur-[6px] border-2 border-white/60 border-t-0 rounded-b-[24px] absolute bottom-[18px] flex items-end shadow-[inset_0_0_20px_rgba(255,255,255,0.7),0_15px_25px_rgba(0,0,0,0.4)] overflow-hidden">
+                            <!-- Liquid (Height represents ratio of volume) -->
+                            <div id="cylinder-liquid" class="w-full relative transition-all duration-1000 rounded-b-[20px] shadow-[inset_0_5px_10px_rgba(0,0,0,0.1)]" style="border-top: 2px solid rgba(255,255,255,0.5)"></div>
+                            
+                            <!-- Ticks overlay -->
+                            <div id="cylinder-ticks" class="absolute inset-0 pointer-events-none">
+                                <!-- Generated by JS -->
+                            </div>
+
+                            <!-- Reading Bubble -->
+                            <div class="absolute top-[35%] -right-[110px] bg-[#0f172a] text-white px-4 py-2 rounded-xl font-mono font-bold text-xl shadow-2xl border-2 border-blue-400">
+                                <span id="cylinder-val"></span><span class="text-sm mr-1.5 font-sans">סמ״ק</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Screen -->
+                    <div id="scale-lcd-3" class="absolute bottom-[12px] left-[20px] w-[110px] h-[36px] rounded-[6px] border-2 border-[#334155] flex items-center justify-center font-mono text-xl font-bold scale-lcd" style="background-color: #020617; color: #22c55e; box-shadow: inset 0 0 12px rgba(34, 197, 94, 0.25)">
+                        0.0
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- STEP 4: Conclusion (Overlay on Lab) --- -->
+        <div id="scene-step-4" class="hidden-el absolute inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 relative overflow-y-auto max-h-[95vh] flex flex-col border border-white/20">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-blue-100 rounded-bl-full opacity-60 pointer-events-none"></div>
+                
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-[#0f172a] mb-8 text-center drop-shadow-sm">המודל החלקיקי - מסקנות החקר</h2>
+                
+                <div class="flex flex-col sm:flex-row gap-6 sm:gap-12 justify-center items-center mb-10">
+                    <!-- Solid Particles -->
+                    <div class="flex flex-col items-center">
+                        <div id="particles-solid" class="w-32 h-32 sm:w-40 sm:h-40 bg-slate-50 rounded-2xl border-2 border-slate-200 flex flex-wrap content-center justify-center gap-1.5 p-3 shadow-inner">
+                            <!-- Generated by JS -->
+                        </div>
+                        <div class="mt-4 font-bold text-slate-800 text-center text-xl">
+                            מוצק<br/>
+                            <span id="label-solid-stats" class="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full mt-2 inline-block border border-slate-200"></span>
+                        </div>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="text-[#0f172a] font-black text-4xl animate-pulse rotate-90 sm:rotate-0 my-4 sm:my-0 drop-shadow-md">→</div>
+
+                    <!-- Liquid Particles -->
+                    <div class="flex flex-col items-center">
+                        <div id="particles-liquid" class="w-36 h-32 sm:w-48 sm:h-40 bg-slate-50 rounded-b-2xl border-2 border-slate-200 relative overflow-hidden flex flex-wrap content-end justify-center gap-[8px] p-4 pb-5 shadow-inner">
+                            <!-- Generated by JS -->
+                        </div>
+                        <div class="mt-4 font-bold text-slate-800 text-center text-xl">
+                            נוזל<br/>
+                            <span id="label-liquid-stats" class="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full mt-2 inline-block border border-slate-200"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 border-2 border-slate-200 p-6 rounded-2xl text-base sm:text-lg shadow-sm">
+                    <p class="text-slate-800 leading-relaxed text-center font-medium m-0">
+                        <span class="text-[#0f172a] font-extrabold block mb-2 text-xl">חוק שימור המסה מתקיים:</span> 
+                        כמות החלקיקים של ה<span id="summary-mat-name"></span> לא השתנתה, ולכן המסה נשארה זהה לחלוטין (<span id="summary-mass"></span> גרם).
+                        <br/><br/>
+                        <span class="text-[#0f172a] font-extrabold block mb-2 text-xl">מדוע הנפח גדל?</span> 
+                        במצב נוזל, החלקיקים נעים בחופשיות ומתרחקים מעט זה מזה, ולכן הם תופסים יותר מקום בחלל (מ-<span id="summary-vol-s"></span> ל-<span id="summary-vol-l"></span> סמ״ק).
+                    </p>
+                </div>
+                
+                <div class="mt-8 flex justify-center">
+                    <button onclick="app.resetSimulator()" class="btn-primary px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-bold text-lg sm:text-xl flex items-center gap-3 shadow-xl">
+                        <i data-lucide="rotate-ccw" class="w-6 h-6"></i> סיום הניסוי והתחלה מחדש
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Data Configuration
+        const materialsData = {
+            butter: { 
+                id: 'butter', name: 'חמאה', mass: 150, solidVol: 148, liquidVol: 155, 
+                gradient: 'linear-gradient(180deg, #ffe066 0%, #facc15 100%)', shadow: '#d4af37',
+                liquidColor: 'rgba(250, 204, 21, 0.85)'
+            },
+            margarine: { 
+                id: 'margarine', name: 'מרגרינה', mass: 200, solidVol: 198, liquidVol: 204, 
+                gradient: 'linear-gradient(180deg, #fef08a 0%, #fde047 100%)', shadow: '#c1a830',
+                liquidColor: 'rgba(253, 224, 71, 0.85)'
+            }
+        };
+
+        // Application Logic & State
+        const app = {
+            state: {
+                step: 1,
+                activeMat: null,
+                fridgeOpen: false,
+                itemOnScale: false,
+                showRuler: false,
+                mass1: '', vol1: '', q1: '', step1Error: '',
+                itemInMicrowave: false, doorOpen: true, isHeating: false, isMelted: false, timer: 5,
+                mass2: '', vol2: '', q2: '', step3Error: ''
+            },
+            timerInterval: null,
+
+            init() {
+                lucide.createIcons();
+                this.generateRulerTicks();
+                this.generateCylinderTicks();
+                this.render();
+            },
+
+            // Updates state and triggers UI re-render
+            setState(updates) {
+                this.state = { ...this.state, ...updates };
+                this.render();
+            },
+
+            // --- State Actions ---
+            toggleFridge() {
+                if (!this.state.itemOnScale) {
+                    this.setState({ fridgeOpen: !this.state.fridgeOpen });
+                }
+            },
+            selectMaterial(matId) {
+                this.setState({ activeMat: matId, itemOnScale: true, fridgeOpen: false });
+            },
+            showRuler() {
+                this.setState({ showRuler: true });
+            },
+            updateMass1() {
+                if(this.state.activeMat) this.setState({ mass1: materialsData[this.state.activeMat].mass.toString() });
+            },
+            updateVol1() {
+                if(this.state.activeMat) this.setState({ vol1: materialsData[this.state.activeMat].solidVol.toString() });
+            },
+            setQ1(val) {
+                this.setState({ q1: val });
+            },
+            submitStep1() {
+                const { activeMat, itemOnScale, mass1, vol1, q1 } = this.state;
+                if (!activeMat || !itemOnScale) {
+                    this.setState({ step1Error: 'אנא פתחו את המקרר, בחרו חומר והניחו על המשקל.' }); return;
+                }
+                const mat = materialsData[activeMat];
+                if (mass1 === '' || vol1 === '') {
+                    this.setState({ step1Error: 'אנא מדדו ועדכנו את המסה והנפח ביומן.' }); return;
+                }
+                if (mass1 !== mat.mass.toString() || vol1 !== mat.solidVol.toString()) {
+                    this.setState({ step1Error: 'הנתונים שהוזנו אינם תואמים את תוצאות המדידה. השתמשו בכפתור העדכון.' }); return;
+                }
+                if (!q1) {
+                    this.setState({ step1Error: 'אנא ענו על שאלת ההבנה לפני שתמשיכו.' }); return;
+                }
+                if (q1 !== 'same') {
+                    this.setState({ step1Error: 'טעות בשאלה. רמז: זכרו את החוק שאנו לומדים - חוק שימור המסה.' }); return;
+                }
+                this.setState({ step1Error: '', step: 2 });
+            },
+            putInMicrowave() {
+                if (!this.state.itemInMicrowave && this.state.doorOpen) {
+                    this.setState({ itemInMicrowave: true });
+                }
+            },
+            toggleMwDoor() {
+                if (this.state.itemInMicrowave && !this.state.isHeating && !this.state.isMelted) {
+                    this.setState({ doorOpen: false });
+                }
+            },
+            startMicrowave() {
+                this.setState({ isHeating: true });
+                this.timerInterval = setInterval(() => {
+                    if (this.state.timer > 1) {
+                        this.setState({ timer: this.state.timer - 1 });
+                    } else {
+                        clearInterval(this.timerInterval);
+                        this.setState({ timer: 0, isHeating: false, isMelted: true, doorOpen: true });
+                    }
+                }, 1000);
+            },
+            goToStep(n) {
+                this.setState({ step: n });
+            },
+            updateMass2() {
+                if(this.state.activeMat) this.setState({ mass2: materialsData[this.state.activeMat].mass.toString() });
+            },
+            updateVol2() {
+                if(this.state.activeMat) this.setState({ vol2: materialsData[this.state.activeMat].liquidVol.toString() });
+            },
+            setQ2(val) {
+                this.setState({ q2: val });
+            },
+            submitStep3() {
+                const mat = materialsData[this.state.activeMat];
+                if (this.state.mass2 === '' || this.state.vol2 === '') {
+                    this.setState({ step3Error: 'אנא קראו את נתוני הנוזל ועדכנו אותם ביומן.' }); return;
+                }
+                if (this.state.mass2 !== mat.mass.toString() || this.state.vol2 !== mat.liquidVol.toString()) {
+                    this.setState({ step3Error: 'הנתונים שהוזנו אינם תואמים. השתמשו בכפתור העדכון מתוך המכשירים.' }); return;
+                }
+                if (!this.state.q2) {
+                    this.setState({ step3Error: 'אנא ענו על שאלת ההבנה לפני שתמשיכו.' }); return;
+                }
+                if (this.state.q2 !== 'distance') {
+                    this.setState({ step3Error: 'טעות. לא הוספנו או גרענו חומר, אז מאיפה יגיעו עוד חלקיקים? חישבו על המרחק ביניהם.' }); return;
+                }
+                this.setState({ step3Error: '', step: 4 });
+                this.generateParticles(); // Initialize particles for step 4
+            },
+            resetSimulator() {
+                clearInterval(this.timerInterval);
+                this.setState({
+                    step: 1, activeMat: null, fridgeOpen: false, itemOnScale: false, showRuler: false,
+                    mass1: '', vol1: '', q1: '', step1Error: '',
+                    itemInMicrowave: false, doorOpen: true, isHeating: false, isMelted: false, timer: 5,
+                    mass2: '', vol2: '', q2: '', step3Error: ''
+                });
+                document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
+            },
+
+            // --- Generation Helpers ---
+            generateRulerTicks() {
+                const container = document.getElementById('ruler-ticks');
+                let html = '';
+                for (let i = 0; i < 21; i++) {
+                    const isMajor = i % 2 === 0;
+                    html += `<div class="r-tick ${isMajor ? 'major' : ''}" style="left: ${(i / 20) * 95 + 2.5}%">
+                                ${isMajor ? `<span class="r-num">${i / 2}</span>` : ''}
+                             </div>`;
+                }
+                container.innerHTML = html;
+            },
+            generateCylinderTicks() {
+                const container = document.getElementById('cylinder-ticks');
+                let html = '';
+                for (let i = 0; i < 11; i++) {
+                    const isMajor = i % 2 === 0;
+                    const bottomPercent = (i / 10) * 100;
+                    html += `<div class="absolute w-[20px] border-b ${isMajor ? 'border-slate-800 border-b-[2px]' : 'border-slate-500 border-b'} opacity-60 right-0" style="bottom: ${bottomPercent}%">
+                                ${isMajor && i > 0 ? `<span class="absolute right-[25px] top-[-8px] text-[12px] font-bold text-slate-800 leading-none">${i * 25}</span>` : ''}
+                             </div>`;
+                }
+                container.innerHTML = html;
+            },
+            generateParticles() {
+                if(!this.state.activeMat) return;
+                const mat = materialsData[this.state.activeMat];
+                const solidContainer = document.getElementById('particles-solid');
+                const liquidContainer = document.getElementById('particles-liquid');
+                
+                let solidHtml = '';
+                for(let i=0; i<25; i++) {
+                    solidHtml += `<div class="w-4 h-4 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.4)]" style="background: ${mat.gradient}"></div>`;
+                }
+                solidContainer.innerHTML = solidHtml;
+
+                let liquidHtml = '';
+                for(let i=0; i<25; i++) {
+                    const animClass = i % 2 === 0 ? 'animate-bounce' : 'animate-pulse';
+                    liquidHtml += `<div class="w-4 h-4 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.4)] ${animClass}" style="background: ${mat.gradient}; animation-delay: ${i*0.1}s; animation-duration: 3s;"></div>`;
+                }
+                liquidContainer.innerHTML = liquidHtml;
+            },
+
+            // --- Central Render Function ---
+            render() {
+                const s = this.state;
+                const mat = s.activeMat ? materialsData[s.activeMat] : null;
+
+                // Toggle Main HUD and Scenes by Step
+                document.getElementById('hud-step-badge').innerText = `תחנה ${s.step}/4`;
+                [1,2,3,4].forEach(i => {
+                    document.getElementById(`hud-step-${i}`).classList.toggle('hidden-el', s.step !== i);
+                    document.getElementById(`scene-step-${i}`).classList.toggle('hidden-el', s.step !== i);
+                });
+
+                // STEP 1 RENDER
+                if (s.step === 1) {
+                    document.getElementById('fridge-door').classList.toggle('open', s.fridgeOpen);
+                    document.getElementById('tip-open-fridge').classList.toggle('hidden-el', s.fridgeOpen || s.itemOnScale);
+                    document.getElementById('tip-choose-mat').classList.toggle('hidden-el', !s.fridgeOpen || s.itemOnScale);
+                    
+                    document.getElementById('shelf-butter').style.display = (s.itemOnScale && s.activeMat === 'butter') ? 'none' : 'block';
+                    document.getElementById('shelf-margarine').style.display = (s.itemOnScale && s.activeMat === 'margarine') ? 'none' : 'block';
+                    
+                    const scaleItem = document.getElementById('scale-item-1');
+                    if (s.itemOnScale && mat) {
+                        scaleItem.classList.remove('hidden-el');
+                        scaleItem.innerText = mat.name;
+                        scaleItem.style.background = mat.gradient;
+                        scaleItem.style.boxShadow = `inset 0px 4px 5px rgba(255,255,255,0.8), -4px 4px 0px ${mat.shadow}, -8px 8px 15px rgba(0,0,0,0.4)`;
+                        document.getElementById('scale-lcd-1').innerText = `${mat.mass}.0`;
+                    } else {
+                        scaleItem.classList.add('hidden-el');
+                        document.getElementById('scale-lcd-1').innerText = `0.0`;
+                    }
+
+                    document.getElementById('btn-show-ruler').disabled = !s.itemOnScale;
+                    document.getElementById('btn-show-ruler').classList.toggle('hidden-el', s.showRuler);
+                    document.getElementById('ruler-display').classList.toggle('hidden-el', !s.showRuler);
+                    if(mat) document.getElementById('ruler-vol-val').innerText = mat.solidVol;
+
+                    // Update HUD texts & buttons Step 1
+                    document.getElementById('val-mass1').innerText = s.mass1 || '---';
+                    const btnMass1 = document.getElementById('btn-update-mass1');
+                    btnMass1.disabled = !s.itemOnScale || s.mass1 === mat?.mass.toString();
+                    btnMass1.innerText = (s.mass1 === mat?.mass.toString()) ? 'עודכן ✓' : 'עדכן נתון';
+
+                    document.getElementById('val-vol1').innerText = s.vol1 || '---';
+                    const btnVol1 = document.getElementById('btn-update-vol1');
+                    btnVol1.disabled = !s.showRuler || s.vol1 === mat?.solidVol.toString();
+                    btnVol1.innerText = (s.vol1 === mat?.solidVol.toString()) ? 'עודכן ✓' : 'עדכן נתון';
+
+                    const err1 = document.getElementById('err-step-1');
+                    if(s.step1Error) { err1.classList.remove('hidden-el'); document.getElementById('err-text-1').innerText = s.step1Error; }
+                    else { err1.classList.add('hidden-el'); }
+                }
+
+                // STEP 2 RENDER
+                if (s.step === 2 && mat) {
+                    const bowlCont = document.getElementById('bowl-container');
+                    bowlCont.className = `absolute transition-all duration-700 z-20 cursor-pointer ${s.itemInMicrowave ? 'bottom-[20vh] left-[48%] -translate-x-1/2 scale-[0.6]' : 'bottom-[12vh] left-[15%] scale-[1.2] hover:scale-[1.25]'}`;
+                    
+                    const bowl = document.getElementById('bowl');
+                    if(s.isHeating) bowl.classList.add('animate-turntable');
+                    else bowl.classList.remove('animate-turntable');
+
+                    const solid = document.getElementById('bowl-solid');
+                    solid.style.background = mat.gradient;
+                    solid.style.boxShadow = `inset 0px 4px 5px rgba(255,255,255,0.8), -2px 2px 0px ${mat.shadow}`;
+                    if(s.isHeating || s.isMelted) { solid.classList.add('scale-y-0', 'opacity-0'); solid.classList.remove('scale-y-100', 'opacity-100'); }
+                    else { solid.classList.remove('scale-y-0', 'opacity-0'); solid.classList.add('scale-y-100', 'opacity-100'); }
+
+                    const liquid = document.getElementById('bowl-liquid');
+                    liquid.style.background = mat.liquidColor;
+                    if(s.isHeating || s.isMelted) { liquid.classList.add('h-[75%]'); liquid.classList.remove('h-0'); }
+                    else { liquid.classList.remove('h-[75%]'); liquid.classList.add('h-0'); }
+
+                    document.getElementById('tip-put-mw').classList.toggle('hidden-el', s.itemInMicrowave);
+                    document.getElementById('mw-door').classList.toggle('open', s.doorOpen);
+                    document.getElementById('tip-close-mw').classList.toggle('hidden-el', !(s.itemInMicrowave && s.doorOpen && !s.isMelted));
+                    
+                    document.getElementById('mw-inside').classList.toggle('heating', s.isHeating);
+                    document.getElementById('mw-timer').innerText = `00:0${s.timer}`;
+                    
+                    const btnStart = document.getElementById('btn-start-mw');
+                    btnStart.disabled = s.doorOpen || s.isHeating || s.isMelted || !s.itemInMicrowave;
+                    document.getElementById('tip-start-mw').classList.toggle('hidden-el', !(!s.doorOpen && !s.isHeating && !s.isMelted && s.itemInMicrowave));
+
+                    // HUD Texts
+                    document.getElementById('hud-mat-name').innerText = mat.name;
+                    document.getElementById('hud-heating-status').classList.toggle('hidden-el', !s.isHeating);
+                    document.getElementById('hud-heating-name').innerText = mat.name;
+                    document.getElementById('hud-melted-status').classList.toggle('hidden-el', !s.isMelted);
+                }
+
+                // STEP 3 RENDER
+                if (s.step === 3 && mat) {
+                    document.getElementById('scale-lcd-3').innerText = `${mat.mass}.0`;
+                    document.getElementById('cylinder-liquid').style.height = `${(mat.liquidVol / 250) * 100}%`;
+                    document.getElementById('cylinder-liquid').style.background = mat.liquidColor;
+                    document.getElementById('cylinder-val').innerText = mat.liquidVol;
+
+                    // Update HUD Step 3
+                    document.getElementById('val-mass2').innerText = s.mass2 || '---';
+                    const btnMass2 = document.getElementById('btn-update-mass2');
+                    btnMass2.disabled = s.mass2 === mat.mass.toString();
+                    btnMass2.innerText = (s.mass2 === mat.mass.toString()) ? 'עודכן ✓' : 'עדכן נתון';
+
+                    document.getElementById('val-vol2').innerText = s.vol2 || '---';
+                    const btnVol2 = document.getElementById('btn-update-vol2');
+                    btnVol2.disabled = s.vol2 === mat.liquidVol.toString();
+                    btnVol2.innerText = (s.vol2 === mat.liquidVol.toString()) ? 'עודכן ✓' : 'עדכן נתון';
+
+                    const err3 = document.getElementById('err-step-3');
+                    if(s.step3Error) { err3.classList.remove('hidden-el'); document.getElementById('err-text-3').innerText = s.step3Error; }
+                    else { err3.classList.add('hidden-el'); }
+                }
+
+                // STEP 4 RENDER
+                if (s.step === 4 && mat) {
+                    document.getElementById('label-solid-stats').innerText = `${mat.mass} גרם | ${mat.solidVol} סמ״ק`;
+                    document.getElementById('label-liquid-stats').innerText = `${mat.mass} גרם | ${mat.liquidVol} סמ״ק`;
+                    document.getElementById('summary-mat-name').innerText = mat.name;
+                    document.getElementById('summary-mass').innerText = mat.mass;
+                    document.getElementById('summary-vol-s').innerText = mat.solidVol;
+                    document.getElementById('summary-vol-l').innerText = mat.liquidVol;
+                    document.getElementById('hud-final-mat').innerText = mat.name;
+                }
+            }
+        };
+
+        // Initialize application when DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+    </script>
+</body>
+</html>
