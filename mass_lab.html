@@ -83,7 +83,7 @@
     <div class="absolute bottom-0 left-0 w-full h-[35%] z-0" style="background: linear-gradient(to bottom, #78350f, #451a03); border-top: 8px solid #381402; box-shadow: inset 0 40px 60px rgba(0,0,0,0.5);"></div>
 
     <!-- Top Header -->
-    <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/80 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50">
+    <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/80 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
         <i data-lucide="flask-conical" class="w-8 h-8 text-[#0f172a]"></i>
         <div>
           <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת חוק שימור המסה</h1>
@@ -94,138 +94,152 @@
     <!-- Main Container -->
     <main class="w-full h-full relative z-10 flex items-center justify-center">
         
-        <!-- ================= HUD (Heads Up Display) Panel ================= -->
-        <div class="absolute top-6 right-6 w-[340px] hud-panel rounded-2xl p-6 z-50 flex flex-col max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b-2 border-slate-200 pb-3 mb-5">
-                <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן מעבדה</h2>
-                <div id="hud-step-badge" class="bg-[#0f172a] text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">תחנה 1/4</div>
-            </div>
-          
-            <!-- HUD STEP 1 -->
-            <div id="hud-step-1" class="flex flex-col gap-5 animate-fade-in">
-                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-3 rounded shadow-sm">
-                    <strong>משימה:</strong> פתחו את המקרר, בחרו חומר, הניחו על המשקל ולאחר מכן עדכנו את הנתונים ביומן.
+        <!-- ================= HUD (Heads Up Display) Panel - Draggable & Collapsible ================= -->
+        <div id="hud-panel" class="absolute top-6 right-6 w-[340px] hud-panel rounded-2xl z-50 flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] transition-shadow">
+            
+            <!-- HUD Header (Drag Handle) -->
+            <div id="hud-header" class="flex justify-between items-center border-b-2 border-slate-200/60 px-6 py-4 cursor-grab bg-white/40 rounded-t-2xl hover:bg-white/60 transition-colors">
+                <div class="flex items-center gap-2 pointer-events-none">
+                    <i data-lucide="grip-horizontal" class="text-slate-500 w-5 h-5"></i>
+                    <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן מעבדה</h2>
                 </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">מסה (גרם)</label>
-                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
-                        <div id="val-mass1" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
-                        <button id="btn-update-mass1" onclick="app.updateMass1()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">נפח (סמ״ק)</label>
-                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
-                        <div id="val-vol1" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
-                        <button id="btn-update-vol1" onclick="app.updateVol1()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
-                    </div>
-                </div>
-                
-                <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
-                    <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
-                    <p class="text-xs text-slate-600 mb-3 font-medium">לקראת החימום: מה לדעתך יקרה למסה של החומר כשהוא יהפוך לנוזל?</p>
-                    <div class="flex flex-col gap-2">
-                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
-                            <input type="radio" name="q1" value="same" onchange="app.setQ1('same')" class="w-4 h-4 text-blue-600 focus:ring-blue-500" /> 
-                            <span class="font-semibold">תישאר זהה</span>
-                        </label>
-                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
-                            <input type="radio" name="q1" value="increase" onchange="app.setQ1('increase')" class="w-4 h-4" /> 
-                            <span class="font-semibold">תגדל</span>
-                        </label>
-                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
-                            <input type="radio" name="q1" value="decrease" onchange="app.setQ1('decrease')" class="w-4 h-4" /> 
-                            <span class="font-semibold">תקטן</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="err-step-1" class="hidden-el text-red-500 text-sm font-bold flex items-start gap-1.5 mt-1 bg-red-50 p-2 rounded">
-                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
-                    <span id="err-text-1"></span>
-                </div>
-                
-                <button onclick="app.submitStep1()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">המשך להתכה במיקרוגל</button>
-            </div>
-
-            <!-- HUD STEP 2 -->
-            <div id="hud-step-2" class="hidden-el flex flex-col justify-center animate-fade-in text-center py-6">
-                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-4 rounded shadow-sm text-right mb-6">
-                    <strong class="block mb-2 text-base">משימה:</strong>
-                    <ol class="list-decimal list-inside space-y-2 font-medium">
-                        <li>הניחו את קערית ה<span id="hud-mat-name"></span> במיקרוגל.</li>
-                        <li>סגרו את הדלת.</li>
-                        <li>לחצו על כפתור ההפעלה.</li>
-                    </ol>
-                </div>
-                <div id="hud-heating-status" class="hidden-el text-[#0f172a] font-extrabold text-lg animate-pulse bg-slate-200 p-3 rounded-lg">מתיך <span id="hud-heating-name"></span>...</div>
-                
-                <div id="hud-melted-status" class="hidden-el mt-4 animate-fade-in">
-                    <div class="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                        <i data-lucide="check-circle-2" class="w-12 h-12 text-green-600"></i>
-                    </div>
-                    <p class="font-extrabold text-xl text-slate-800 mb-6">ההתכה הושלמה!</p>
-                    <button onclick="app.goToStep(3)" class="btn-primary w-full p-4 rounded-xl font-bold text-lg shadow-lg">המשך למדידת הנוזל</button>
+                <div class="flex items-center gap-3">
+                    <div id="hud-step-badge" class="bg-[#0f172a] text-white px-3 py-1 rounded-md text-sm font-bold shadow-md pointer-events-none">תחנה 1/4</div>
+                    <button onclick="app.toggleHud(event)" class="p-1.5 hover:bg-slate-200/80 rounded-lg transition-colors text-slate-700 cursor-pointer">
+                        <i data-lucide="chevron-down" id="hud-toggle-icon" class="w-5 h-5 pointer-events-none"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- HUD STEP 3 -->
-            <div id="hud-step-3" class="hidden-el flex flex-col gap-5 animate-fade-in">
-                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-3 rounded shadow-sm">
-                    <strong>משימה:</strong> קראו את נתוני המסה מהמשקל ואת נתוני הנפח מהמשורה. לאחר מכן עדכנו ביומן.
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">מסה סופית (גרם)</label>
-                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
-                        <div id="val-mass2" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
-                        <button id="btn-update-mass2" onclick="app.updateMass2()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">נפח סופי (סמ״ק)</label>
-                    <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
-                        <div id="val-vol2" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
-                        <button id="btn-update-vol2" onclick="app.updateVol2()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
-                    </div>
-                </div>
-
-                <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
-                    <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
-                    <p class="text-xs text-slate-600 mb-3 font-medium">ראינו שהנפח גדל למרות שהמסה נשמרה. למה זה קרה?</p>
-                    <div class="flex flex-col gap-2">
-                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
-                            <input type="radio" name="q2" value="distance" onchange="app.setQ2('distance')" class="w-4 h-4 text-blue-600" /> 
-                            <span class="font-semibold">החלקיקים התרחקו זה מזה</span>
-                        </label>
-                        <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
-                            <input type="radio" name="q2" value="added" onchange="app.setQ2('added')" class="w-4 h-4" /> 
-                            <span class="font-semibold">נוספו חלקיקים חדשים</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="err-step-3" class="hidden-el text-red-500 text-sm font-bold flex items-start gap-1.5 mt-1 bg-red-50 p-2 rounded">
-                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
-                    <span id="err-text-3"></span>
-                </div>
+            <!-- HUD Content Area -->
+            <div id="hud-content" class="flex flex-col px-6 pb-6 pt-4 overflow-y-auto max-h-[75vh]">
                 
-                <button onclick="app.submitStep3()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">לסיכום הניסוי</button>
-            </div>
+                <!-- HUD STEP 1 -->
+                <div id="hud-step-1" class="flex flex-col gap-5 animate-fade-in">
+                    <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-3 rounded shadow-sm">
+                        <strong>משימה:</strong> פתחו את המקרר, בחרו חומר, הניחו על המשקל ולאחר מכן עדכנו את הנתונים ביומן.
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">מסה (גרם)</label>
+                        <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                            <div id="val-mass1" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                            <button id="btn-update-mass1" onclick="app.updateMass1()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                        </div>
+                    </div>
 
-            <!-- HUD STEP 4 -->
-            <div id="hud-step-4" class="hidden-el flex flex-col items-center justify-center py-8 animate-fade-in text-center">
-                <div class="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                    <i data-lucide="check-circle-2" class="w-14 h-14 text-green-600"></i>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">נפח (סמ״ק)</label>
+                        <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                            <div id="val-vol1" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                            <button id="btn-update-vol1" onclick="app.updateVol1()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
+                        <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
+                        <p class="text-xs text-slate-600 mb-3 font-medium">לקראת החימום: מה לדעתך יקרה למסה של החומר כשהוא יהפוך לנוזל?</p>
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="same" onchange="app.setQ1('same')" class="w-4 h-4 text-blue-600 focus:ring-blue-500" /> 
+                                <span class="font-semibold">תישאר זהה</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="increase" onchange="app.setQ1('increase')" class="w-4 h-4" /> 
+                                <span class="font-semibold">תגדל</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="decrease" onchange="app.setQ1('decrease')" class="w-4 h-4" /> 
+                                <span class="font-semibold">תקטן</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="err-step-1" class="hidden-el text-red-500 text-sm font-bold flex items-start gap-1.5 mt-1 bg-red-50 p-2 rounded">
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+                        <span id="err-text-1"></span>
+                    </div>
+                    
+                    <button onclick="app.submitStep1()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">המשך להתכה במיקרוגל</button>
                 </div>
-                <h3 class="font-extrabold text-2xl text-[#0f172a]">הניסוי הושלם!</h3>
-                <p class="text-base text-slate-600 mt-3 font-medium">הוכחתם בהצלחה את חוק שימור המסה עבור <span id="hud-final-mat"></span>.</p>
-                <button onclick="app.resetSimulator()" class="mt-10 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-4 rounded-xl w-full flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
-                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i> התחלה מחדש
-                </button>
+
+                <!-- HUD STEP 2 -->
+                <div id="hud-step-2" class="hidden-el flex flex-col justify-center animate-fade-in text-center py-4">
+                    <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-4 rounded shadow-sm text-right mb-6">
+                        <strong class="block mb-2 text-base">משימה:</strong>
+                        <ol class="list-decimal list-inside space-y-2 font-medium">
+                            <li>הניחו את קערית ה<span id="hud-mat-name"></span> במיקרוגל.</li>
+                            <li>סגרו את הדלת.</li>
+                            <li>לחצו על כפתור ההפעלה.</li>
+                        </ol>
+                    </div>
+                    <div id="hud-heating-status" class="hidden-el text-[#0f172a] font-extrabold text-lg animate-pulse bg-slate-200 p-3 rounded-lg">מתיך <span id="hud-heating-name"></span>...</div>
+                    
+                    <div id="hud-melted-status" class="hidden-el mt-4 animate-fade-in">
+                        <div class="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                            <i data-lucide="check-circle-2" class="w-12 h-12 text-green-600"></i>
+                        </div>
+                        <p class="font-extrabold text-xl text-slate-800 mb-6">ההתכה הושלמה!</p>
+                        <button onclick="app.goToStep(3)" class="btn-primary w-full p-4 rounded-xl font-bold text-lg shadow-lg">המשך למדידת הנוזל</button>
+                    </div>
+                </div>
+
+                <!-- HUD STEP 3 -->
+                <div id="hud-step-3" class="hidden-el flex flex-col gap-5 animate-fade-in">
+                    <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-900 text-sm p-3 rounded shadow-sm">
+                        <strong>משימה:</strong> קראו את נתוני המסה מהמשקל ואת נתוני הנפח מהמשורה. לאחר מכן עדכנו ביומן.
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">מסה סופית (גרם)</label>
+                        <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                            <div id="val-mass2" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                            <button id="btn-update-mass2" onclick="app.updateMass2()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">נפח סופי (סמ״ק)</label>
+                        <div class="relative w-full flex items-center border-2 border-slate-200 rounded-lg bg-slate-50 shadow-inner h-[48px] overflow-hidden">
+                            <div id="val-vol2" class="flex-1 text-center font-mono text-xl font-bold text-slate-700">---</div>
+                            <button id="btn-update-vol2" onclick="app.updateVol2()" class="absolute left-1.5 btn-update h-9 px-4 shadow">עדכן נתון</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 mt-2 shadow-sm">
+                        <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת הבנה:</label>
+                        <p class="text-xs text-slate-600 mb-3 font-medium">ראינו שהנפח גדל למרות שהמסה נשמרה. למה זה קרה?</p>
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="distance" onchange="app.setQ2('distance')" class="w-4 h-4 text-blue-600" /> 
+                                <span class="font-semibold">החלקיקים התרחקו זה מזה</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-2 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="added" onchange="app.setQ2('added')" class="w-4 h-4" /> 
+                                <span class="font-semibold">נוספו חלקיקים חדשים</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="err-step-3" class="hidden-el text-red-500 text-sm font-bold flex items-start gap-1.5 mt-1 bg-red-50 p-2 rounded">
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+                        <span id="err-text-3"></span>
+                    </div>
+                    
+                    <button onclick="app.submitStep3()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">לסיכום הניסוי</button>
+                </div>
+
+                <!-- HUD STEP 4 -->
+                <div id="hud-step-4" class="hidden-el flex flex-col items-center justify-center py-6 animate-fade-in text-center">
+                    <div class="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <i data-lucide="check-circle-2" class="w-14 h-14 text-green-600"></i>
+                    </div>
+                    <h3 class="font-extrabold text-2xl text-[#0f172a]">הניסוי הושלם!</h3>
+                    <p class="text-base text-slate-600 mt-3 font-medium">הוכחתם בהצלחה את חוק שימור המסה עבור <span id="hud-final-mat"></span>.</p>
+                    <button onclick="app.resetSimulator()" class="mt-10 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-4 rounded-xl w-full flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i> התחלה מחדש
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -478,7 +492,8 @@
                 showRuler: false,
                 mass1: '', vol1: '', q1: '', step1Error: '',
                 itemInMicrowave: false, doorOpen: true, isHeating: false, isMelted: false, timer: 5,
-                mass2: '', vol2: '', q2: '', step3Error: ''
+                mass2: '', vol2: '', q2: '', step3Error: '',
+                hudCollapsed: false
             },
             timerInterval: null,
 
@@ -486,6 +501,7 @@
                 lucide.createIcons();
                 this.generateRulerTicks();
                 this.generateCylinderTicks();
+                this.initDraggableHud();
                 this.render();
             },
 
@@ -493,6 +509,69 @@
             setState(updates) {
                 this.state = { ...this.state, ...updates };
                 this.render();
+            },
+
+            // --- HUD Drag & Toggle Logic ---
+            initDraggableHud() {
+                const hud = document.getElementById('hud-panel');
+                const header = document.getElementById('hud-header');
+                
+                let isDragging = false;
+                let currentX = 0, currentY = 0, initialX = 0, initialY = 0;
+                let xOffset = 0, yOffset = 0;
+
+                const dragStart = (e) => {
+                    // Ignore if clicking the toggle button
+                    if (e.target.closest('button')) return;
+                    
+                    if (e.type === "touchstart") {
+                        initialX = e.touches[0].clientX - xOffset;
+                        initialY = e.touches[0].clientY - yOffset;
+                    } else {
+                        initialX = e.clientX - xOffset;
+                        initialY = e.clientY - yOffset;
+                    }
+                    isDragging = true;
+                    header.classList.add('cursor-grabbing');
+                    header.classList.remove('cursor-grab');
+                };
+
+                const dragEnd = (e) => {
+                    initialX = currentX;
+                    initialY = currentY;
+                    isDragging = false;
+                    header.classList.remove('cursor-grabbing');
+                    header.classList.add('cursor-grab');
+                };
+
+                const drag = (e) => {
+                    if (isDragging) {
+                        e.preventDefault();
+                        if (e.type === "touchmove") {
+                            currentX = e.touches[0].clientX - initialX;
+                            currentY = e.touches[0].clientY - initialY;
+                        } else {
+                            currentX = e.clientX - initialX;
+                            currentY = e.clientY - initialY;
+                        }
+                        xOffset = currentX;
+                        yOffset = currentY;
+                        hud.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+                    }
+                };
+
+                header.addEventListener('mousedown', dragStart);
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('mousemove', drag);
+                
+                header.addEventListener('touchstart', dragStart, {passive: false});
+                document.addEventListener('touchend', dragEnd);
+                document.addEventListener('touchmove', drag, {passive: false});
+            },
+
+            toggleHud(e) {
+                if(e) e.stopPropagation();
+                this.setState({ hudCollapsed: !this.state.hudCollapsed });
             },
 
             // --- State Actions ---
@@ -588,11 +667,17 @@
             },
             resetSimulator() {
                 clearInterval(this.timerInterval);
+                
+                // Reset HUD position completely
+                const hud = document.getElementById('hud-panel');
+                hud.style.transform = `translate3d(0px, 0px, 0)`;
+                
                 this.setState({
                     step: 1, activeMat: null, fridgeOpen: false, itemOnScale: false, showRuler: false,
                     mass1: '', vol1: '', q1: '', step1Error: '',
                     itemInMicrowave: false, doorOpen: true, isHeating: false, isMelted: false, timer: 5,
-                    mass2: '', vol2: '', q2: '', step3Error: ''
+                    mass2: '', vol2: '', q2: '', step3Error: '',
+                    hudCollapsed: false
                 });
                 document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
             },
@@ -645,6 +730,17 @@
             render() {
                 const s = this.state;
                 const mat = s.activeMat ? materialsData[s.activeMat] : null;
+
+                // Handle HUD Toggle Visibility
+                const hudContent = document.getElementById('hud-content');
+                const hudToggleIcon = document.getElementById('hud-toggle-icon');
+                if (s.hudCollapsed) {
+                    hudContent.classList.add('hidden-el');
+                    hudToggleIcon.innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>'; // lucide chevron-up
+                } else {
+                    hudContent.classList.remove('hidden-el');
+                    hudToggleIcon.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>'; // lucide chevron-down
+                }
 
                 // Toggle Main HUD and Scenes by Step
                 document.getElementById('hud-step-badge').innerText = `תחנה ${s.step}/4`;
