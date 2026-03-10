@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבדת חוק שימור המסה - גזים</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            background: radial-gradient(circle at 50% 30%, #f8fafc 0%, #cbd5e1 100%);
+        }
+
+        /* Utility classes */
+        .scale-lcd { text-shadow: 0 0 8px rgba(0, 255, 0, 0.7); font-family: 'Courier New', Courier, monospace; }
+        .hud-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.8); box-shadow: -10px 25px 50px -12px rgba(0,0,0,0.25); }
+        .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-primary:hover:not(:disabled) { background-color: #1e293b; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+        .hidden-el { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* Lab Desk */
+        #desk-surface {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 35%;
+            background: linear-gradient(to bottom, #cbd5e1, #94a3b8);
+            border-top: 6px solid #64748b;
+            box-shadow: inset 0 20px 40px rgba(0,0,0,0.1);
+            z-index: 0;
+        }
+
+        /* --- Apparatus CSS --- */
+        
+        /* The Scale */
+        .digital-scale {
+            width: 240px; height: 60px; border-radius: 12px; position: relative;
+            background: linear-gradient(145deg, #f1f5f9, #cbd5e1);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.3), inset 0 2px 5px white;
+            transition: transform 0.3s;
+        }
+        .scale-plate {
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            width: 160px; height: 15px; border-radius: 8px 8px 0 0;
+            background: linear-gradient(to right, #e2e8f0, #94a3b8);
+            box-shadow: 0 -3px 8px rgba(0,0,0,0.2);
+            display: flex; justify-content: center; align-items: flex-end;
+        }
+        .scale-screen {
+            position: absolute; bottom: 10px; right: 20px; width: 120px; height: 36px;
+            border-radius: 6px; border: 2px solid #334155; background-color: #020617; color: #22c55e;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;
+            box-shadow: inset 0 0 12px rgba(34, 197, 94, 0.25);
+        }
+
+        /* Hotplate & Pot */
+        .hotplate {
+            width: 260px; height: 50px; border-radius: 12px; position: relative;
+            background: #334155; box-shadow: 0 15px 25px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.2);
+        }
+        .heating-surface {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 180px; height: 15px; border-radius: 50%;
+            background: #1e293b; transition: all 1s;
+        }
+        .heating-surface.on { background: #ef4444; box-shadow: 0 0 20px #ef4444, inset 0 0 10px #fca5a5; }
+        .pot {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 200px; height: 140px; background: rgba(203, 213, 225, 0.4);
+            border: 4px solid #94a3b8; border-top: none; border-radius: 0 0 20px 20px;
+            backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: flex-end;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.1), inset 10px 0 20px rgba(255,255,255,0.5);
+            overflow: hidden;
+        }
+        .water-bath {
+            width: 100%; height: 60%; background: rgba(56, 189, 248, 0.4);
+            border-top: 2px solid rgba(255,255,255,0.6); position: relative;
+            transition: background 2s;
+        }
+        .water-bath.hot { background: rgba(56, 189, 248, 0.6); }
+        .bubble {
+            position: absolute; bottom: 0; background: rgba(255,255,255,0.6); border-radius: 50%;
+            animation: rise linear infinite; opacity: 0;
+        }
+
+        /* Flask & Balloon */
+        .flask-system {
+            position: absolute; display: flex; flex-direction: column; items: center;
+            cursor: pointer; z-index: 20; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: bottom center;
+        }
+        .flask-system:hover { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
+        
+        .balloon {
+            width: 46px; height: 55px; background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; margin: 0 auto;
+            position: relative; top: 15px; z-index: 2;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3);
+            transform-origin: bottom center; transition: transform 0.5s;
+        }
+        .balloon-neck {
+            width: 14px; height: 15px; background: #dc2626; margin: 0 auto;
+            position: relative; top: 10px; z-index: 1; border-radius: 3px;
+        }
+        
+        .flask {
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
+        }
+        .flask-top {
+            width: 30px; height: 45px; border: 3px solid rgba(255,255,255,0.9); border-bottom: none;
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(2px); z-index: 2;
+        }
+        .flask-bottom {
+            width: 100px; height: 90px; border: 3px solid rgba(255,255,255,0.9); border-top: none;
+            border-radius: 40px 40px 15px 15px; background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(2px); position: relative; top: -2px;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.1), inset 10px 0 20px rgba(255,255,255,0.8);
+            clip-path: polygon(35% 0, 65% 0, 100% 100%, 0% 100%);
+        }
+
+        /* Positioning states for Flask */
+        .pos-bench { bottom: 15vh; left: 50%; transform: translateX(-50%) scale(1.1); }
+        .pos-scale { bottom: 35vh; left: 20%; transform: translateX(-50%) scale(1.1); }
+        .pos-pot { bottom: 18vh; right: 20%; transform: translateX(50%) scale(1.1); }
+        
+        /* Particle Animation */
+        .particle-box {
+            position: relative; width: 100%; height: 100%; overflow: hidden;
+            border-radius: 0 0 10px 10px;
+        }
+        .gas-particle {
+            position: absolute; width: 8px; height: 8px; background: #3b82f6; border-radius: 50%;
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); transition: all 0.2s linear;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes rise { 0% { bottom: 0; transform: translateX(0) scale(0.5); opacity: 0.8;} 100% { bottom: 100%; transform: translateX(10px) scale(1.2); opacity: 0;} }
+        @keyframes bounceGently { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .anim-bounce-slow { animation: bounceGently 3s infinite ease-in-out; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Desk Surface -->
+    <div id="desk-surface"></div>
+
+    <!-- Top Header -->
+    <div class="absolute top-6 right-6 flex items-center gap-3 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
+        <i data-lucide="thermometer-sun" class="w-8 h-8 text-red-500"></i>
+        <div>
+          <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת גזים וחום</h1>
+          <p class="text-xs text-slate-500 font-medium m-0">חוק שימור המסה</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="w-full h-full relative z-10">
+
+        <!-- ================= START SCREEN ================= -->
+        <div id="screen-intro" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 text-center border border-white/50 m-4">
+                <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i data-lucide="flask-round" class="w-10 h-10 text-blue-600"></i>
+                </div>
+                <h2 class="text-4xl font-black text-[#0f172a] mb-6">ניסוי: חימום גז במיכל סגור</h2>
+                <div class="text-right text-slate-700 text-lg leading-relaxed space-y-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <p>מה קורה לאוויר כאשר מחממים אותו? האם המסה שלו משתנה?</p>
+                    <p>בניסוי זה נחקור את <strong>חוק שימור המסה</strong> במערכת סגורה (ארלנמייר עם בלון) ונראה כיצד חימום משפיע על התנהגות החלקיקים.</p>
+                </div>
+                <button onclick="app.startSim()" class="btn-primary px-12 py-4 rounded-xl font-bold text-xl shadow-lg inline-flex items-center gap-3 hover:scale-105 transition-transform">
+                    לכניסה למעבדה <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= LAB ENVIRONMENT ================= -->
+        <div id="lab-environment" class="hidden-el w-full h-full absolute inset-0">
+            
+            <!-- Scale Station (Left visually, right logically) -->
+            <div class="absolute bottom-[20vh] left-[20%] transform -translate-x-1/2 flex flex-col items-center">
+                <div id="tip-scale" class="hidden-el mb-4 whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none">
+                    ↓ לחצו על הארלנמייר כדי לשקול אותו
+                </div>
+                <div class="digital-scale">
+                    <div class="scale-plate"></div>
+                    <div class="scale-screen" id="scale-lcd">0.00</div>
+                </div>
+                <div class="text-slate-600 font-bold mt-4 text-sm bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm border border-white">תחנת שקילה</div>
+            </div>
+
+            <!-- Heating Station (Right visually) -->
+            <div class="absolute bottom-[20vh] right-[20%] transform translate-x-1/2 flex flex-col items-center">
+                <div id="tip-pot" class="hidden-el mb-[160px] whitespace-nowrap bg-red-500 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
+                    ↓ העבירו את הארלנמייר לאמבט המים החמים
+                </div>
+                
+                <div class="pot relative z-10">
+                    <div id="water-level" class="water-bath flex justify-center items-end pb-2">
+                        <!-- Bubbles injected by JS -->
+                    </div>
+                </div>
+                <div class="hotplate z-0 mt-[-10px]">
+                    <div id="heating-coil" class="heating-surface"></div>
+                </div>
+                
+                <div class="flex gap-4 mt-6">
+                    <button id="btn-heat" onclick="app.toggleHeat()" disabled class="bg-red-100 text-red-700 border-2 border-red-300 font-bold py-2 px-6 rounded-xl transition-colors hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        <i data-lucide="power" class="w-5 h-5"></i> <span id="btn-heat-text">הפעל חימום</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- The Movable Flask System -->
+            <div id="flask-obj" class="flask-system pos-bench anim-bounce-slow" onclick="app.interactFlask()">
+                <div id="balloon-obj" class="balloon" style="transform: scale(0.6);"></div>
+                <div class="balloon-neck"></div>
+                <div class="flask">
+                    <div class="flask-top"></div>
+                    <div class="flask-bottom">
+                        <div id="particles-container" class="particle-box">
+                            <!-- Particles injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= HUD PANEL ================= -->
+        <div id="hud-panel" class="hidden-el absolute top-6 left-6 w-[360px] hud-panel rounded-2xl z-50 flex flex-col transition-all duration-300">
+            
+            <div class="flex justify-between items-center border-b border-slate-200/60 px-6 py-4 bg-slate-50/80 rounded-t-2xl">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="text-blue-600 w-6 h-6"></i>
+                    <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן חקר</h2>
+                </div>
+                <div id="hud-step-badge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-black border border-blue-200">שלב 1/3</div>
+            </div>
+
+            <div class="flex flex-col px-6 pb-6 pt-5 overflow-y-auto max-h-[75vh]">
+                
+                <!-- STEP 1 -->
+                <div id="hud-step-1" class="flex flex-col gap-5 animate-fade-in">
+                    <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <span class="font-bold text-blue-600 block mb-1">משימה:</span>
+                        העבירו את המערכת הסגורה (הבקבוק והבלון) אל המשקל ומדדו את המסה ההתחלתית בטמפרטורת החדר.
+                    </p>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">מסה התחלתית (גרם)</label>
+                        <div class="flex gap-3">
+                            <div id="val-mass1" class="flex-1 text-center font-mono text-2xl font-bold text-[#0f172a] bg-white rounded-lg border border-slate-200 py-2 shadow-inner">---</div>
+                            <button id="btn-rec-mass1" onclick="app.recordMass1()" disabled class="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white font-bold px-4 rounded-lg shadow-sm transition-colors text-sm">שמור נתון</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <label class="block text-sm font-extrabold text-[#0f172a] mb-2">השערה:</label>
+                        <p class="text-xs text-slate-600 mb-3 font-medium">כאשר נחמם את הבקבוק, מה לדעתך יקרה למסה של המערכת כולה?</p>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="same" class="w-4 h-4 text-blue-600" /> <span class="font-semibold">המסה תישאר זהה לחלוטין</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="increase" class="w-4 h-4" /> <span class="font-semibold">המסה תגדל בגלל החום</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="decrease" class="w-4 h-4" /> <span class="font-semibold">המסה תקטן (הגז יתאדה)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="err-step-1" class="hidden-el text-red-500 text-sm font-bold flex items-center gap-2 mt-1 bg-red-50 p-3 rounded-lg border border-red-100">
+                        <i data-lucide="alert-circle" class="w-5 h-5"></i> <span id="err-text-1"></span>
+                    </div>
+                    
+                    <button onclick="app.submitStep1()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">המשך לחימום</button>
+                </div>
+
+                <!-- STEP 2 -->
+                <div id="hud-step-2" class="hidden-el flex flex-col gap-5 animate-fade-in">
+                    <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <span class="font-bold text-red-500 block mb-1">משימה:</span>
+                        העבירו את הבקבוק אל סיר המים. הדליקו את פלטת החימום וצפו במתרחש עד שהמים ירתחו והבלון יתנפח במלואו.
+                    </p>
+
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center">
+                        <div class="text-xs font-bold text-slate-500 mb-2 uppercase">טמפרטורת מים</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <i data-lucide="thermometer" class="text-red-500 w-8 h-8"></i>
+                            <div class="font-mono text-4xl font-black text-[#0f172a]"><span id="hud-temp">20</span>°C</div>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 mt-4 overflow-hidden">
+                            <div id="temp-progress" class="bg-red-500 h-2.5 rounded-full transition-all duration-1000" style="width: 20%"></div>
+                        </div>
+                    </div>
+
+                    <button id="btn-next-step-2" onclick="app.submitStep2()" disabled class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">המשך לשקילה חוזרת</button>
+                </div>
+
+                <!-- STEP 3 -->
+                <div id="hud-step-3" class="hidden-el flex flex-col gap-5 animate-fade-in">
+                    <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <span class="font-bold text-emerald-600 block mb-1">משימה אחרונה:</span>
+                        בעוד המערכת חמה והבלון מנופח, החזירו אותה למשקל ומדדו את המסה הסופית.
+                    </p>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">מסה סופית (גרם)</label>
+                        <div class="flex gap-3">
+                            <div id="val-mass2" class="flex-1 text-center font-mono text-2xl font-bold text-[#0f172a] bg-white rounded-lg border border-slate-200 py-2 shadow-inner">---</div>
+                            <button id="btn-rec-mass2" onclick="app.recordMass2()" disabled class="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white font-bold px-4 rounded-lg shadow-sm transition-colors text-sm">שמור נתון</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת סיכום:</label>
+                        <p class="text-xs text-slate-600 mb-3 font-medium">ראינו שנפח הבלון גדל. מהו ההסבר המדעי לכך ברמת החלקיקים?</p>
+                        <div class="space-y-2">
+                            <label class="flex items-start gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="added" class="w-4 h-4 mt-0.5 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold leading-snug">חלקיקי גז נוספים נוצרו מתוך החום ומילאו את הבלון.</span>
+                            </label>
+                            <label class="flex items-start gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="distance" class="w-4 h-4 mt-0.5 shrink-0" /> 
+                                <span class="font-semibold leading-snug">החלקיקים הקיימים נעו מהר יותר, התרחקו זה מזה ודחפו את דפנות הבלון.</span>
+                            </label>
+                            <label class="flex items-start gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="size" class="w-4 h-4 mt-0.5 shrink-0" /> 
+                                <span class="font-semibold leading-snug">כל חלקיק בודד של גז התנפח וגדל בעצמו בגלל החום.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="err-step-3" class="hidden-el text-red-500 text-sm font-bold flex items-center gap-2 mt-1 bg-red-50 p-3 rounded-lg border border-red-100">
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span id="err-text-3"></span>
+                    </div>
+                    
+                    <button onclick="app.finishSim()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg bg-indigo-600 hover:bg-indigo-700">למסקנות הניסוי</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= CONCLUSION OVERLAY ================= -->
+        <div id="screen-conclusion" class="hidden-el absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 transition-opacity duration-500">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 relative overflow-hidden flex flex-col items-center text-center">
+                <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-100 rounded-full opacity-50 pointer-events-none blur-3xl"></div>
+                <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-100 rounded-full opacity-50 pointer-events-none blur-3xl"></div>
+                
+                <div class="bg-emerald-100 text-emerald-600 p-4 rounded-full mb-6 relative z-10 shadow-sm border border-emerald-200">
+                    <i data-lucide="check-circle" class="w-12 h-12"></i>
+                </div>
+                
+                <h2 class="text-3xl font-black text-[#0f172a] mb-8 relative z-10">כל הכבוד! סיימתם את הניסוי.</h2>
+                
+                <div class="w-full bg-slate-50 border border-slate-200 p-6 rounded-2xl relative z-10 text-right space-y-6">
+                    <div>
+                        <h3 class="font-extrabold text-xl text-blue-800 flex items-center gap-2 mb-2">
+                            <i data-lucide="scale" class="w-5 h-5"></i> חוק שימור המסה מתקיים
+                        </h3>
+                        <p class="text-slate-700 font-medium leading-relaxed">
+                            המסה ההתחלתית והמסה הסופית היו זהות בדיוק (<span id="conc-mass"></span> גרם). כיוון שהבקבוק חסום על ידי הבלון, אף חלקיק גז לא נכנס ואף חלקיק לא יצא. כמות החומר נשארה קבועה.
+                        </p>
+                    </div>
+                    
+                    <div class="h-px w-full bg-slate-200"></div>
+                    
+                    <div>
+                        <h3 class="font-extrabold text-xl text-red-600 flex items-center gap-2 mb-2">
+                            <i data-lucide="expand" class="w-5 h-5"></i> התרחבות הגז ברמת החלקיקים
+                        </h3>
+                        <p class="text-slate-700 font-medium leading-relaxed">
+                            כאשר חיממנו את האוויר בבקבוק, הוספנו <strong>אנרגיה</strong> לחלקיקים. הם החלו לנוע במהירות רבה יותר ולהתנגש זה בזה ובדפנות בעוצמה רבה. כתוצאה מכך, <strong>המרחק הממוצע</strong> בין החלקיקים גדל, והגז תפס נפח גדול יותר וניפח את הבלון.
+                        </p>
+                    </div>
+                </div>
+                
+                <button onclick="location.reload()" class="mt-8 bg-[#0f172a] text-white hover:bg-slate-800 font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 relative z-10 flex items-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i> התחילו מחדש
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Data & State
+        const APP_DATA = {
+            systemMass: 145.20, // Mass of flask + balloon + air
+            minTemp: 20,
+            maxTemp: 100,
+            particleCount: 40
+        };
+
+        const app = {
+            state: {
+                step: 0, // 0: intro, 1: measure1, 2: heat, 3: measure2, 4: conclusion
+                flaskLocation: 'bench', // 'bench', 'scale', 'pot'
+                temp: APP_DATA.minTemp,
+                isHeating: false,
+                mass1: null,
+                q1: null,
+                mass2: null,
+                q2: null
+            },
+            particles: [],
+            heatInterval: null,
+
+            init() {
+                lucide.createIcons();
+                this.initParticles();
+            },
+
+            // --- State Management ---
+            startSim() {
+                document.getElementById('screen-intro').classList.add('opacity-0');
+                setTimeout(() => {
+                    document.getElementById('screen-intro').classList.add('hidden-el');
+                    document.getElementById('lab-environment').classList.remove('hidden-el');
+                    document.getElementById('hud-panel').classList.remove('hidden-el');
+                    this.setStep(1);
+                    this.updateFlaskVisuals();
+                }, 500);
+            },
+
+            setStep(n) {
+                this.state.step = n;
+                document.getElementById('hud-step-badge').innerText = `שלב ${n}/3`;
+                
+                [1,2,3].forEach(i => {
+                    document.getElementById(`hud-step-${i}`).classList.toggle('hidden-el', n !== i);
+                });
+
+                // Hints logic
+                document.getElementById('tip-scale').classList.toggle('hidden-el', 
+                    !(n === 1 && this.state.flaskLocation !== 'scale') && 
+                    !(n === 3 && this.state.flaskLocation !== 'scale')
+                );
+                document.getElementById('tip-pot').classList.toggle('hidden-el', 
+                    !(n === 2 && this.state.flaskLocation !== 'pot')
+                );
+
+                // Re-evaluate button states
+                this.evaluateStepRequirements();
+            },
+
+            interactFlask() {
+                const s = this.state;
+                
+                if (s.step === 1 && s.flaskLocation !== 'scale') {
+                    s.flaskLocation = 'scale';
+                } else if (s.step === 2 && s.flaskLocation === 'scale') {
+                    s.flaskLocation = 'pot';
+                } else if (s.step === 3 && s.flaskLocation !== 'scale') {
+                    s.flaskLocation = 'scale';
+                }
+                
+                this.updateFlaskVisuals();
+                this.setStep(s.step); // Trigger hint updates
+            },
+
+            updateFlaskVisuals() {
+                const flask = document.getElementById('flask-obj');
+                const scaleLcd = document.getElementById('scale-lcd');
+                
+                flask.className = 'flask-system'; // reset
+                
+                if (this.state.flaskLocation === 'bench') {
+                    flask.classList.add('pos-bench', 'anim-bounce-slow');
+                    scaleLcd.innerText = '0.00';
+                } else if (this.state.flaskLocation === 'scale') {
+                    flask.classList.add('pos-scale');
+                    setTimeout(() => scaleLcd.innerText = APP_DATA.systemMass.toFixed(2), 300);
+                } else if (this.state.flaskLocation === 'pot') {
+                    flask.classList.add('pos-pot');
+                    scaleLcd.innerText = '0.00';
+                    document.getElementById('btn-heat').disabled = false;
+                }
+
+                // Evaluate record buttons
+                document.getElementById('btn-rec-mass1').disabled = (this.state.flaskLocation !== 'scale');
+                document.getElementById('btn-rec-mass2').disabled = (this.state.flaskLocation !== 'scale');
+            },
+
+            // --- Actions & Forms ---
+            recordMass1() {
+                this.state.mass1 = APP_DATA.systemMass;
+                document.getElementById('val-mass1').innerText = this.state.mass1.toFixed(2);
+                document.getElementById('btn-rec-mass1').innerText = "עודכן ✓";
+                document.getElementById('btn-rec-mass1').classList.replace('bg-emerald-500', 'bg-slate-400');
+            },
+            
+            submitStep1() {
+                const errEl = document.getElementById('err-step-1');
+                const errTxt = document.getElementById('err-text-1');
+                
+                const q1Val = document.querySelector('input[name="q1"]:checked')?.value;
+                
+                if (!this.state.mass1) {
+                    errTxt.innerText = "יש לשקול את המערכת ולשמור את הנתון.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (!q1Val) {
+                    errTxt.innerText = "אנא ענו על שאלת ההשערה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (q1Val !== 'same') {
+                    errTxt.innerText = "זכרו שמדובר במערכת סגורה (הבלון אוטם). החומר לא יכול לברוח או להיכנס. נסו שוב.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                
+                errEl.classList.add('hidden-el');
+                this.setStep(2);
+            },
+
+            toggleHeat() {
+                this.state.isHeating = !this.state.isHeating;
+                const btn = document.getElementById('btn-heat');
+                const btnText = document.getElementById('btn-heat-text');
+                const coil = document.getElementById('heating-coil');
+                const water = document.getElementById('water-level');
+
+                if (this.state.isHeating) {
+                    btn.classList.replace('bg-red-100', 'bg-slate-200');
+                    btn.classList.replace('text-red-700', 'text-slate-700');
+                    btn.classList.replace('border-red-300', 'border-slate-400');
+                    btnText.innerText = "כבה חימום";
+                    coil.classList.add('on');
+                    water.classList.add('hot');
+                    this.createBubbles();
+                    
+                    this.heatInterval = setInterval(() => {
+                        if (this.state.temp < APP_DATA.maxTemp) {
+                            this.state.temp += 2;
+                            this.updateThermodynamics();
+                        } else {
+                            document.getElementById('btn-next-step-2').disabled = false;
+                        }
+                    }, 200);
+                } else {
+                    btn.classList.replace('bg-slate-200', 'bg-red-100');
+                    btn.classList.replace('text-slate-700', 'text-red-700');
+                    btn.classList.replace('border-slate-400', 'border-red-300');
+                    btnText.innerText = "הפעל חימום";
+                    coil.classList.remove('on');
+                    water.classList.remove('hot');
+                    clearInterval(this.heatInterval);
+                    document.getElementById('water-level').innerHTML = ''; // Clear bubbles
+                }
+            },
+
+            updateThermodynamics() {
+                // UI Updates
+                document.getElementById('hud-temp').innerText = this.state.temp;
+                document.getElementById('temp-progress').style.width = `${this.state.temp}%`;
+                
+                // Balloon Volume (Scale from 0.6 to 1.8 based on temp)
+                // Linear mapping: T(20..100) -> Scale(0.6..1.8)
+                const ratio = (this.state.temp - APP_DATA.minTemp) / (APP_DATA.maxTemp - APP_DATA.minTemp);
+                const balloonScale = 0.6 + (ratio * 1.2);
+                document.getElementById('balloon-obj').style.transform = `scale(${balloonScale})`;
+
+                // Particle Speed calculation
+                this.updateParticlesSpeed(ratio);
+            },
+
+            createBubbles() {
+                const container = document.getElementById('water-level');
+                container.innerHTML = '';
+                for(let i=0; i<15; i++) {
+                    const b = document.createElement('div');
+                    b.className = 'bubble';
+                    b.style.left = `${Math.random() * 80 + 10}%`;
+                    b.style.width = `${Math.random() * 8 + 4}px`;
+                    b.style.height = b.style.width;
+                    b.style.animationDuration = `${Math.random() * 1 + 0.5}s`;
+                    b.style.animationDelay = `${Math.random() * 2}s`;
+                    container.appendChild(b);
+                }
+            },
+
+            submitStep2() {
+                if(this.state.isHeating) this.toggleHeat(); // Turn off if left on
+                document.getElementById('btn-heat').disabled = true;
+                this.setStep(3);
+            },
+
+            recordMass2() {
+                this.state.mass2 = APP_DATA.systemMass;
+                document.getElementById('val-mass2').innerText = this.state.mass2.toFixed(2);
+                document.getElementById('btn-rec-mass2').innerText = "עודכן ✓";
+                document.getElementById('btn-rec-mass2').classList.replace('bg-emerald-500', 'bg-slate-400');
+            },
+
+            finishSim() {
+                const errEl = document.getElementById('err-step-3');
+                const errTxt = document.getElementById('err-text-3');
+                
+                const q2Val = document.querySelector('input[name="q2"]:checked')?.value;
+                
+                if (!this.state.mass2) {
+                    errTxt.innerText = "יש לשקול את המערכת שוב ולשמור את הנתון.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (!q2Val) {
+                    errTxt.innerText = "אנא בחרו את ההסבר המדעי הנכון.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (q2Val !== 'distance') {
+                    errTxt.innerText = "טעות. החלקיקים אינם גדלים בעצמם ואינם נוצרים יש מאין. חישבו על התנועה שלהם.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+
+                errEl.classList.add('hidden-el');
+                
+                // Show Conclusion
+                document.getElementById('conc-mass').innerText = APP_DATA.systemMass.toFixed(2);
+                document.getElementById('screen-conclusion').classList.remove('hidden-el');
+            },
+
+            evaluateStepRequirements() {
+                // Utility to check internal constraints if needed dynamically
+            },
+
+            // --- Particle System ---
+            initParticles() {
+                const container = document.getElementById('particles-container');
+                for (let i = 0; i < APP_DATA.particleCount; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'gas-particle';
+                    // Random initial positions within the lower flask area
+                    p.style.left = `${Math.random() * 80 + 10}%`;
+                    p.style.bottom = `${Math.random() * 60 + 10}%`;
+                    container.appendChild(p);
+                    this.particles.push(p);
+                }
+                this.updateParticlesSpeed(0); // Initial slow state
+            },
+
+            updateParticlesSpeed(heatRatio) {
+                // heatRatio is 0.0 (cold) to 1.0 (hot)
+                this.particles.forEach((p, index) => {
+                    // Base spread depends on heat. 
+                    // Cold: grouped lower. Hot: spread everywhere including balloon (virtual high area)
+                    const maxBottom = 60 + (heatRatio * 80); // Can go very high when hot
+                    const duration = 2.0 - (heatRatio * 1.8); // 2s cold -> 0.2s hot
+                    
+                    // Assign random new positions continually via CSS transition
+                    const moveParticle = () => {
+                        if(this.state.temp === 20 && Math.random() > 0.3) {
+                             // Keep them mostly lower when cold
+                             p.style.bottom = `${Math.random() * 50 + 5}%`;
+                        } else {
+                            // Spread out when hot
+                            p.style.bottom = `${Math.random() * maxBottom + 5}%`;
+                        }
+                        
+                        // Width constrained by flask shape roughly
+                        const heightPercent = parseFloat(p.style.bottom);
+                        let leftMin = 10, leftMax = 90;
+                        if(heightPercent > 70) { leftMin = 40; leftMax = 60; } // Narrow neck
+                        
+                        p.style.left = `${Math.random() * (leftMax - leftMin) + leftMin}%`;
+                        p.style.transitionDuration = `${duration + Math.random()*0.5}s`;
+                    };
+
+                    // Initial move
+                    moveParticle();
+                    
+                    // Clear old intervals and set new ones for continuous random movement
+                    if(p.dataset.interval) clearInterval(parseInt(p.dataset.interval));
+                    
+                    const intervalId = setInterval(moveParticle, duration * 1000);
+                    p.dataset.interval = intervalId;
+                });
+            }
+        };
+
+        // Boot
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
