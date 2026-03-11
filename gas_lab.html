@@ -107,7 +107,8 @@
         .flask-system:hover { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
         
         .flask {
-            position: absolute; bottom: 0;
+            position: absolute; bottom: 0; left: 0; right: 0; margin: 0 auto;
+            width: 100px;
             display: flex; flex-direction: column; align-items: center;
             filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
             z-index: 2;
@@ -125,7 +126,7 @@
         }
 
         .balloon {
-            position: absolute; bottom: 132px; /* anchors perfectly at the top rim of flask */
+            position: absolute; bottom: 132px; left: 0; right: 0; margin: 0 auto;
             width: 46px; height: 55px;
             background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
             border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
@@ -134,7 +135,7 @@
             transition: transform 0.2s linear; /* Smooth 3D flip */
         }
         .balloon-neck {
-            position: absolute; bottom: 125px; /* anchors on the rim */
+            position: absolute; bottom: 125px; left: 0; right: 0; margin: 0 auto;
             width: 34px; height: 12px;
             background: #dc2626; border-radius: 4px;
             z-index: 3; /* sits in front of the glass rim */
@@ -142,9 +143,9 @@
         }
 
         /* Positioning states for Flask */
-        .pos-bench { bottom: 15vh; right: 25%; transform: translateX(50%) scale(1.1); }
-        .pos-scale { bottom: calc(20vh + 50px); left: 50%; transform: translateX(-50%) scale(1.1); }
-        .pos-pot { bottom: calc(20vh + 50px); left: 20%; transform: translateX(-50%) scale(1.1); }
+        .pos-bench { bottom: 15vh; right: 35%; transform: translateX(50%) scale(1.1); }
+        .pos-scale { bottom: calc(20vh + 115px); left: calc(50% - 6px); transform: translateX(-50%) scale(1.1); }
+        .pos-pot { bottom: calc(20vh + 105px); left: calc(20% - 6px); transform: translateX(-50%) scale(1.1); }
         
         /* Particle Animation */
         .particle-box {
@@ -205,7 +206,7 @@
             
             <!-- Scale Station -->
             <div class="absolute bottom-[20vh] left-[50%] transform -translate-x-1/2 flex flex-col items-center">
-                <div id="tip-scale" class="hidden-el mb-[80px] whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none">
+                <div id="tip-scale" class="hidden-el absolute -top-[60px] whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
                     ↓ לחצו על הארלנמייר כדי לשקול אותו
                 </div>
                 <div class="digital-scale">
@@ -217,7 +218,7 @@
 
             <!-- Heating Station -->
             <div class="absolute bottom-[20vh] left-[20%] transform -translate-x-1/2 flex flex-col items-center">
-                <div id="tip-pot" class="hidden-el mb-[190px] whitespace-nowrap bg-red-500 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
+                <div id="tip-pot" class="hidden-el absolute -top-[60px] whitespace-nowrap bg-red-500 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
                     ↓ העבירו את הארלנמייר לאמבט המים החמים
                 </div>
                 
