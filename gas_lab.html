@@ -99,31 +99,22 @@
 
         /* Flask & Balloon */
         .flask-system {
-            position: absolute; display: flex; flex-direction: column; items: center;
+            position: absolute; display: flex; justify-content: center;
+            width: 120px; height: 220px; /* enough height to contain balloon */
             cursor: pointer; z-index: 20; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             transform-origin: bottom center;
         }
         .flask-system:hover { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
         
-        .balloon {
-            width: 46px; height: 55px; background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
-            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; margin: 0 auto;
-            position: relative; top: 15px; z-index: 2;
-            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3);
-            transform-origin: bottom center; transition: transform 0.5s;
-        }
-        .balloon-neck {
-            width: 14px; height: 15px; background: #dc2626; margin: 0 auto;
-            position: relative; top: 10px; z-index: 1; border-radius: 3px;
-        }
-        
         .flask {
-            position: relative; display: flex; flex-direction: column; align-items: center;
+            position: absolute; bottom: 0;
+            display: flex; flex-direction: column; align-items: center;
             filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
+            z-index: 2;
         }
         .flask-top {
             width: 30px; height: 45px; border: 3px solid rgba(255,255,255,0.9); border-bottom: none;
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(2px); z-index: 2;
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(2px);
         }
         .flask-bottom {
             width: 100px; height: 90px; border: 3px solid rgba(255,255,255,0.9); border-top: none;
@@ -133,10 +124,27 @@
             clip-path: polygon(35% 0, 65% 0, 100% 100%, 0% 100%);
         }
 
+        .balloon {
+            position: absolute; bottom: 132px; /* anchors perfectly at the top rim of flask */
+            width: 46px; height: 55px;
+            background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            z-index: 1; /* sits behind the front face of the glass */
+            transform-origin: bottom center;
+            transition: transform 0.2s linear; /* Smooth 3D flip */
+        }
+        .balloon-neck {
+            position: absolute; bottom: 125px; /* anchors on the rim */
+            width: 34px; height: 12px;
+            background: #dc2626; border-radius: 4px;
+            z-index: 3; /* sits in front of the glass rim */
+            box-shadow: inset 0 -3px 5px rgba(0,0,0,0.3);
+        }
+
         /* Positioning states for Flask */
         .pos-bench { bottom: 15vh; left: 50%; transform: translateX(-50%) scale(1.1); }
-        .pos-scale { bottom: 35vh; left: 20%; transform: translateX(-50%) scale(1.1); }
-        .pos-pot { bottom: 18vh; right: 20%; transform: translateX(50%) scale(1.1); }
+        .pos-scale { bottom: calc(20vh + 50px); left: 20%; transform: translateX(-50%) scale(1.1); }
+        .pos-pot { bottom: calc(20vh + 35px); right: 20%; transform: translateX(50%) scale(1.1); }
         
         /* Particle Animation */
         .particle-box {
@@ -194,9 +202,9 @@
         <!-- ================= LAB ENVIRONMENT ================= -->
         <div id="lab-environment" class="hidden-el w-full h-full absolute inset-0">
             
-            <!-- Scale Station (Left visually, right logically) -->
+            <!-- Scale Station -->
             <div class="absolute bottom-[20vh] left-[20%] transform -translate-x-1/2 flex flex-col items-center">
-                <div id="tip-scale" class="hidden-el mb-4 whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none">
+                <div id="tip-scale" class="hidden-el mb-[80px] whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none">
                     ↓ לחצו על הארלנמייר כדי לשקול אותו
                 </div>
                 <div class="digital-scale">
@@ -206,9 +214,9 @@
                 <div class="text-slate-600 font-bold mt-4 text-sm bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm border border-white">תחנת שקילה</div>
             </div>
 
-            <!-- Heating Station (Right visually) -->
+            <!-- Heating Station -->
             <div class="absolute bottom-[20vh] right-[20%] transform translate-x-1/2 flex flex-col items-center">
-                <div id="tip-pot" class="hidden-el mb-[160px] whitespace-nowrap bg-red-500 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
+                <div id="tip-pot" class="hidden-el mb-[170px] whitespace-nowrap bg-red-500 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
                     ↓ העבירו את הארלנמייר לאמבט המים החמים
                 </div>
                 
@@ -230,16 +238,15 @@
 
             <!-- The Movable Flask System -->
             <div id="flask-obj" class="flask-system pos-bench anim-bounce-slow" onclick="app.interactFlask()">
-                <div id="balloon-obj" class="balloon" style="transform: scale(0.6);"></div>
-                <div class="balloon-neck"></div>
                 <div class="flask">
                     <div class="flask-top"></div>
                     <div class="flask-bottom">
-                        <div id="particles-container" class="particle-box">
-                            <!-- Particles injected here -->
-                        </div>
+                        <div id="particles-container" class="particle-box"></div>
                     </div>
                 </div>
+                <!-- Balloon is injected upside down on init -->
+                <div id="balloon-obj" class="balloon" style="transform: rotateX(180deg) scale(0.5);"></div>
+                <div class="balloon-neck"></div>
             </div>
 
         </div>
@@ -270,7 +277,7 @@
                 <div id="hud-step-1" class="flex flex-col gap-5 animate-fade-in">
                     <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                         <span class="font-bold text-blue-600 block mb-1">משימה:</span>
-                        העבירו את המערכת הסגורה (הבקבוק והבלון) אל המשקל ומדדו את המסה ההתחלתית בטמפרטורת החדר.
+                        העבירו את המערכת הסגורה (הבקבוק והבלון שבתוכו) אל המשקל ומדדו את המסה ההתחלתית בטמפרטורת החדר.
                     </p>
                     
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -308,7 +315,7 @@
                 <div id="hud-step-2" class="hidden-el flex flex-col gap-5 animate-fade-in">
                     <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                         <span class="font-bold text-red-500 block mb-1">משימה:</span>
-                        העבירו את הבקבוק אל סיר המים. הדליקו את פלטת החימום וצפו במתרחש עד שהמים ירתחו והבלון יתנפח במלואו.
+                        העבירו את הבקבוק אל סיר המים. הדליקו את פלטת החימום וצפו במתרחש עד שהמים ירתחו והבלון יתהפך ויתנפח.
                     </p>
 
                     <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center">
@@ -371,7 +378,7 @@
 
         <!-- ================= CONCLUSION OVERLAY ================= -->
         <div id="screen-conclusion" class="hidden-el absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 transition-opacity duration-500">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 relative overflow-hidden flex flex-col items-center text-center">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 relative overflow-hidden flex flex-col items-center text-center border border-white/20">
                 <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-100 rounded-full opacity-50 pointer-events-none blur-3xl"></div>
                 <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-100 rounded-full opacity-50 pointer-events-none blur-3xl"></div>
                 
@@ -386,8 +393,9 @@
                         <h3 class="font-extrabold text-xl text-blue-800 flex items-center gap-2 mb-2">
                             <i data-lucide="scale" class="w-5 h-5"></i> חוק שימור המסה מתקיים
                         </h3>
-                        <p class="text-slate-700 font-medium leading-relaxed">
-                            המסה ההתחלתית והמסה הסופית היו זהות בדיוק (<span id="conc-mass"></span> גרם). כיוון שהבקבוק חסום על ידי הבלון, אף חלקיק גז לא נכנס ואף חלקיק לא יצא. כמות החומר נשארה קבועה.
+                        <p class="text-slate-700 font-medium leading-relaxed text-lg">
+                            המסה ההתחלתית והמסה הסופית היו זהות בדיוק (<span id="conc-mass"></span> גרם). 
+                            <strong class="text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 shadow-sm inline-block my-1">מאחר ומדובר במערכת סגורה אף חלקיק לא יצא ולא נכנס.</strong> לכן כמות החומר נשארה קבועה לחלוטין.
                         </p>
                     </div>
                     
@@ -398,7 +406,7 @@
                             <i data-lucide="expand" class="w-5 h-5"></i> התרחבות הגז ברמת החלקיקים
                         </h3>
                         <p class="text-slate-700 font-medium leading-relaxed">
-                            כאשר חיממנו את האוויר בבקבוק, הוספנו <strong>אנרגיה</strong> לחלקיקים. הם החלו לנוע במהירות רבה יותר ולהתנגש זה בזה ובדפנות בעוצמה רבה. כתוצאה מכך, <strong>המרחק הממוצע</strong> בין החלקיקים גדל, והגז תפס נפח גדול יותר וניפח את הבלון.
+                            כאשר חיממנו את האוויר בבקבוק, הוספנו <strong>אנרגיה</strong> לחלקיקים. הם החלו לנוע במהירות רבה יותר ולהתנגש זה בזה ובדפנות בעוצמה רבה. כתוצאה מכך, <strong>המרחק הממוצע</strong> בין החלקיקים גדל, והגז תפס נפח גדול יותר ודחף את הבלון כלפי חוץ.
                         </p>
                     </div>
                 </div>
@@ -439,6 +447,8 @@
                 lucide.createIcons();
                 this.initParticles();
                 this.initDraggableHud();
+                // Ensure balloon starts completely inverted (inside flask)
+                document.getElementById('balloon-obj').style.transform = `rotateX(180deg) scale(0.5)`;
             },
 
             // --- HUD Drag & Toggle Logic ---
@@ -451,8 +461,7 @@
                 let xOffset = 0, yOffset = 0;
 
                 const dragStart = (e) => {
-                    // Ignore if clicking a button (like the toggle button)
-                    if (e.target.closest('button')) return;
+                    if (e.target.closest('button')) return; // ignore toggle button
                     
                     if (e.type === "touchstart") {
                         initialX = e.touches[0].clientX - xOffset;
@@ -536,7 +545,6 @@
                     document.getElementById(`hud-step-${i}`).classList.toggle('hidden-el', n !== i);
                 });
 
-                // Hints logic
                 document.getElementById('tip-scale').classList.toggle('hidden-el', 
                     !(n === 1 && this.state.flaskLocation !== 'scale') && 
                     !(n === 3 && this.state.flaskLocation !== 'scale')
@@ -544,9 +552,6 @@
                 document.getElementById('tip-pot').classList.toggle('hidden-el', 
                     !(n === 2 && this.state.flaskLocation !== 'pot')
                 );
-
-                // Re-evaluate button states
-                this.evaluateStepRequirements();
             },
 
             interactFlask() {
@@ -561,14 +566,14 @@
                 }
                 
                 this.updateFlaskVisuals();
-                this.setStep(s.step); // Trigger hint updates
+                this.setStep(s.step); 
             },
 
             updateFlaskVisuals() {
                 const flask = document.getElementById('flask-obj');
                 const scaleLcd = document.getElementById('scale-lcd');
                 
-                flask.className = 'flask-system'; // reset
+                flask.className = 'flask-system'; 
                 
                 if (this.state.flaskLocation === 'bench') {
                     flask.classList.add('pos-bench', 'anim-bounce-slow');
@@ -582,7 +587,6 @@
                     document.getElementById('btn-heat').disabled = false;
                 }
 
-                // Evaluate record buttons
                 document.getElementById('btn-rec-mass1').disabled = (this.state.flaskLocation !== 'scale');
                 document.getElementById('btn-rec-mass2').disabled = (this.state.flaskLocation !== 'scale');
             },
@@ -598,7 +602,6 @@
             submitStep1() {
                 const errEl = document.getElementById('err-step-1');
                 const errTxt = document.getElementById('err-text-1');
-                
                 const q1Val = document.querySelector('input[name="q1"]:checked')?.value;
                 
                 if (!this.state.mass1) {
@@ -655,17 +658,29 @@
             },
 
             updateThermodynamics() {
-                // UI Updates
                 document.getElementById('hud-temp').innerText = this.state.temp;
                 document.getElementById('temp-progress').style.width = `${this.state.temp}%`;
                 
-                // Balloon Volume (Scale from 0.6 to 1.8 based on temp)
-                // Linear mapping: T(20..100) -> Scale(0.6..1.8)
                 const ratio = (this.state.temp - APP_DATA.minTemp) / (APP_DATA.maxTemp - APP_DATA.minTemp);
-                const balloonScale = 0.6 + (ratio * 1.2);
-                document.getElementById('balloon-obj').style.transform = `scale(${balloonScale})`;
+                
+                // 3D Flip & Scale Animation
+                let rotX = 0;
+                let scl = 0.5;
+                if (ratio < 0.1) {
+                    rotX = 180; // Inverted
+                    scl = 0.5;
+                } else if (ratio < 0.3) {
+                    let subRatio = (ratio - 0.1) / 0.2; 
+                    rotX = 180 - (subRatio * 180); // Flips inside-out upwards!
+                    scl = 0.5 + (subRatio * 0.2); 
+                } else {
+                    let subRatio = (ratio - 0.3) / 0.7; 
+                    rotX = 0; // Standing up
+                    scl = 0.7 + (subRatio * 0.9); // Inflates max up to 1.6 scale
+                }
+                
+                document.getElementById('balloon-obj').style.transform = `rotateX(${rotX}deg) scale(${scl})`;
 
-                // Particle Speed calculation
                 this.updateParticlesSpeed(ratio);
             },
 
@@ -685,7 +700,7 @@
             },
 
             submitStep2() {
-                if(this.state.isHeating) this.toggleHeat(); // Turn off if left on
+                if(this.state.isHeating) this.toggleHeat(); 
                 document.getElementById('btn-heat').disabled = true;
                 this.setStep(3);
             },
@@ -700,7 +715,6 @@
             finishSim() {
                 const errEl = document.getElementById('err-step-3');
                 const errTxt = document.getElementById('err-text-3');
-                
                 const q2Val = document.querySelector('input[name="q2"]:checked')?.value;
                 
                 if (!this.state.mass2) {
@@ -717,14 +731,8 @@
                 }
 
                 errEl.classList.add('hidden-el');
-                
-                // Show Conclusion
                 document.getElementById('conc-mass').innerText = APP_DATA.systemMass.toFixed(2);
                 document.getElementById('screen-conclusion').classList.remove('hidden-el');
-            },
-
-            evaluateStepRequirements() {
-                // Utility to check internal constraints if needed dynamically
             },
 
             // --- Particle System ---
@@ -733,55 +741,43 @@
                 for (let i = 0; i < APP_DATA.particleCount; i++) {
                     const p = document.createElement('div');
                     p.className = 'gas-particle';
-                    // Random initial positions within the lower flask area
                     p.style.left = `${Math.random() * 80 + 10}%`;
                     p.style.bottom = `${Math.random() * 60 + 10}%`;
                     container.appendChild(p);
                     this.particles.push(p);
                 }
-                this.updateParticlesSpeed(0); // Initial slow state
+                this.updateParticlesSpeed(0);
             },
 
             updateParticlesSpeed(heatRatio) {
-                // heatRatio is 0.0 (cold) to 1.0 (hot)
-                this.particles.forEach((p, index) => {
-                    // Base spread depends on heat. 
-                    // Cold: grouped lower. Hot: spread everywhere including balloon (virtual high area)
-                    const maxBottom = 60 + (heatRatio * 80); // Can go very high when hot
-                    const duration = 2.0 - (heatRatio * 1.8); // 2s cold -> 0.2s hot
+                this.particles.forEach((p) => {
+                    const maxBottom = 60 + (heatRatio * 80); 
+                    const duration = 2.0 - (heatRatio * 1.8); 
                     
-                    // Assign random new positions continually via CSS transition
                     const moveParticle = () => {
                         if(this.state.temp === 20 && Math.random() > 0.3) {
-                             // Keep them mostly lower when cold
                              p.style.bottom = `${Math.random() * 50 + 5}%`;
                         } else {
-                            // Spread out when hot
                             p.style.bottom = `${Math.random() * maxBottom + 5}%`;
                         }
                         
-                        // Width constrained by flask shape roughly
                         const heightPercent = parseFloat(p.style.bottom);
                         let leftMin = 10, leftMax = 90;
-                        if(heightPercent > 70) { leftMin = 40; leftMax = 60; } // Narrow neck
+                        if(heightPercent > 70) { leftMin = 40; leftMax = 60; } 
                         
                         p.style.left = `${Math.random() * (leftMax - leftMin) + leftMin}%`;
                         p.style.transitionDuration = `${duration + Math.random()*0.5}s`;
                     };
 
-                    // Initial move
                     moveParticle();
                     
-                    // Clear old intervals and set new ones for continuous random movement
                     if(p.dataset.interval) clearInterval(parseInt(p.dataset.interval));
-                    
                     const intervalId = setInterval(moveParticle, duration * 1000);
                     p.dataset.interval = intervalId;
                 });
             }
         };
 
-        // Boot
         window.addEventListener('DOMContentLoaded', () => {
             app.init();
         });
