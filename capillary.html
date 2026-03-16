@@ -44,8 +44,7 @@
         .apparatus-container {
             position: absolute;
             bottom: 15vh;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 10%; /* ממוקם בצד שמאל במקום באמצע */
             width: 400px;
             height: 500px;
             z-index: 10;
@@ -117,7 +116,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            width: 100px; /* fixed bounding box for centering */
+            width: 100px;
             z-index: 1;
         }
 
@@ -154,7 +153,7 @@
             height: 2px;
         }
 
-        /* Particle Animation (for the intro/decor) */
+        /* Particle Animation */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -196,7 +195,7 @@
         </div>
         <div>
           <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת זורמים</h1>
-          <p class="text-xs text-slate-500 font-medium m-0">תופעת הנימיות (Capillary Action)</p>
+          <p class="text-xs text-slate-500 font-medium m-0">תופעת הנימיות</p>
         </div>
     </div>
 
@@ -210,7 +209,7 @@
                 <h2 class="text-4xl font-black text-[#0f172a] mb-6">ניסוי: כוח הנימיות בצינורות</h2>
                 <div class="text-right text-slate-700 text-lg leading-relaxed space-y-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <p>האם מים יכולים לטפס למעלה בניגוד לכוח המשיכה?</p>
-                    <p>בניסוי זה נחקור את <strong>תופעת הנימיות (Capillary Action)</strong>. נבדוק כיצד עובי (קוטר) הצינור משפיע על הגובה אליו יצליחו המים לטפס, ונלמד על כוחות הלכידות וההידבקות של המולקולות.</p>
+                    <p>בניסוי זה נחקור את <strong>תופעת הנימיות</strong>. נבדוק כיצד עובי (קוטר) הצינור משפיע על הגובה אליו יצליחו המים לטפס, ונלמד על כוחות הלכידות וההידבקות של המולקולות.</p>
                 </div>
                 <button onclick="app.startSim()" class="btn-primary px-12 py-4 rounded-xl font-bold text-xl shadow-lg inline-flex items-center gap-3 hover:scale-105 transition-transform">
                     לכניסה למעבדה <i data-lucide="arrow-left" class="w-6 h-6"></i>
@@ -220,8 +219,8 @@
 
         <div id="lab-environment" class="hidden-el w-full h-full absolute inset-0">
             
-            <div id="tip-slider" class="hidden-el absolute top-[25vh] right-[30%] whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
-                ← שנו את קוטר הצינור ביומן החקר
+            <div id="tip-slider" class="hidden-el absolute top-[25vh] right-[400px] whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
+                שנו את קוטר הצינור ביומן החקר בצד ימין
             </div>
 
             <div class="apparatus-container anim-float">
@@ -313,7 +312,7 @@
                 <div id="hud-step-2" class="hidden-el flex flex-col gap-5 animate-fade-in">
                     <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                         <span class="font-bold text-emerald-600 block mb-1">הסבר פיזיקלי:</span>
-                        המים מטפסים בגלל שילוב של שני כוחות: כוח <strong class="text-blue-600">הידבקות (Adhesion)</strong> לדפנות הזכוכית, וכוח <strong class="text-blue-600">לכידות (Cohesion)</strong> בין מולקולות המים עצמן המושכות זו את זו מעלה.
+                        המים מטפסים בגלל שילוב של שני כוחות: כוח <strong class="text-blue-600">הידבקות</strong> לדפנות הזכוכית, וכוח <strong class="text-blue-600">לכידות</strong> בין מולקולות המים עצמן המושכות זו את זו מעלה.
                     </p>
                     
                     <div class="mt-2">
@@ -362,7 +361,7 @@
                         </h3>
                         <p class="text-slate-700 font-medium leading-relaxed text-lg">
                             ראינו בבירור: <strong>ככל שהצינור דק יותר, המים יעלו בו גבוה יותר</strong>. 
-                            התופעה הזו, הנקראת <em>נימיות (Capillary Action)</em>, מוגבלת בסופו של דבר על ידי משקל הנוזל (כוח הכבידה). לעולם לא נראה את המים מטפסים עד אינסוף; הם ייעצרו כאשר משקל עמודת המים ישתווה לכוח המשיכה הנימי כלפי מעלה.
+                            התופעה הזו, הנקראת <em>נימיות</em>, מוגבלת בסופו של דבר על ידי משקל הנוזל (כוח הכבידה). לעולם לא נראה את המים מטפסים עד אינסוף; הם ייעצרו כאשר משקל עמודת המים ישתווה לכוח המשיכה הנימי כלפי מעלה.
                         </p>
                     </div>
 
@@ -516,8 +515,6 @@
                 // Physics calculation: height inversely proportional to diameter (Jurin's law simplified)
                 // H = Base + (k / radius)
                 const k = 1500; // arbitrary constant for visual effect
-                // If width=60, lift = 1500/60 = 25px. Total = 120+25 = 145px
-                // If width=6, lift = 1500/6 = 250px. Total = 120+250 = 370px
                 const capillaryLift = k / this.state.tubeWidth; 
                 let finalHeight = this.state.baseWaterLvl + capillaryLift;
                 
