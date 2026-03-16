@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מעבדת זורמים - תופעת הנימיות</title>
+    <title>מעבדה - תופעת הנימיות</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
@@ -44,7 +44,7 @@
         .apparatus-container {
             position: absolute;
             bottom: 15vh;
-            left: 10%; /* ממוקם בצד שמאל במקום באמצע */
+            left: 10%; 
             width: 400px;
             height: 500px;
             z-index: 10;
@@ -132,24 +132,24 @@
         /* Ruler Grid */
         .ruler {
             position: absolute;
-            right: -30px;
+            right: -45px;
             bottom: 0;
             height: 100%;
-            width: 20px;
-            border-left: 2px solid #64748b;
-            opacity: 0.6;
+            width: 40px;
+            border-left: 2px solid #334155;
+            opacity: 0.85;
             pointer-events: none;
         }
         .ruler-mark {
             position: absolute;
             left: 0;
-            width: 10px;
+            width: 8px;
             height: 1px;
-            background: #64748b;
+            background: #475569;
         }
         .ruler-mark.major {
-            width: 15px;
-            background: #334155;
+            width: 14px;
+            background: #0f172a;
             height: 2px;
         }
 
@@ -194,7 +194,7 @@
             <i data-lucide="droplets" class="w-6 h-6"></i>
         </div>
         <div>
-          <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת זורמים</h1>
+          <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדה</h1>
           <p class="text-xs text-slate-500 font-medium m-0">תופעת הנימיות</p>
         </div>
     </div>
@@ -209,7 +209,7 @@
                 <h2 class="text-4xl font-black text-[#0f172a] mb-6">ניסוי: כוח הנימיות בצינורות</h2>
                 <div class="text-right text-slate-700 text-lg leading-relaxed space-y-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <p>האם מים יכולים לטפס למעלה בניגוד לכוח המשיכה?</p>
-                    <p>בניסוי זה נחקור את <strong>תופעת הנימיות</strong>. נבדוק כיצד עובי (קוטר) הצינור משפיע על הגובה אליו יצליחו המים לטפס, ונלמד על כוחות הלכידות וההידבקות של המולקולות.</p>
+                    <p>בניסוי זה נחקור את <strong>תופעת הנימיות</strong>. נבדוק כיצד עובי צינור משפיע על הגובה אליו יצליחו המים לטפס, ונלמד על כוחות הלכידות וההידבקות של המולקולות.</p>
                 </div>
                 <button onclick="app.startSim()" class="btn-primary px-12 py-4 rounded-xl font-bold text-xl shadow-lg inline-flex items-center gap-3 hover:scale-105 transition-transform">
                     לכניסה למעבדה <i data-lucide="arrow-left" class="w-6 h-6"></i>
@@ -406,6 +406,20 @@
                     const tick = document.createElement('div');
                     tick.className = `ruler-mark ${i % 50 === 0 ? 'major' : ''}`;
                     tick.style.bottom = `${i}px`;
+                    
+                    if (i % 50 === 0) {
+                        const num = document.createElement('span');
+                        num.innerText = i;
+                        num.style.position = 'absolute';
+                        num.style.left = '18px';
+                        num.style.top = '-8px';
+                        num.style.fontSize = '11px';
+                        num.style.fontWeight = 'bold';
+                        num.style.color = '#0f172a';
+                        num.style.fontFamily = 'monospace';
+                        tick.appendChild(num);
+                    }
+
                     ruler.appendChild(tick);
                 }
             },
