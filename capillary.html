@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבדת זורמים - תופעת הנימיות</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            background: radial-gradient(circle at 50% 30%, #f8fafc 0%, #cbd5e1 100%);
+        }
+
+        /* Utility classes */
+        .hud-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.8); box-shadow: -10px 25px 50px -12px rgba(0,0,0,0.25); }
+        .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-primary:hover:not(:disabled) { background-color: #1e293b; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+        .hidden-el { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* Lab Desk */
+        #desk-surface {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 35%;
+            background: linear-gradient(to bottom, #cbd5e1, #94a3b8);
+            border-top: 6px solid #64748b;
+            box-shadow: inset 0 20px 40px rgba(0,0,0,0.1);
+            z-index: 0;
+        }
+
+        /* --- Apparatus CSS (Capillary System) --- */
+        .apparatus-container {
+            position: absolute;
+            bottom: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 500px;
+            z-index: 10;
+            filter: drop-shadow(0 20px 25px rgba(0,0,0,0.2));
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(2px);
+            box-shadow: inset -5px 0 15px rgba(0,0,0,0.1), inset 5px 0 15px rgba(255,255,255,0.6);
+            position: absolute;
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to right, #0284c7, #38bdf8, #0369a1);
+            transition: height 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            opacity: 0.9;
+        }
+
+        /* The meniscus (curved surface) */
+        .meniscus {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: translateY(-50%);
+            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Base horizontal pipe */
+        .base-pipe {
+            bottom: 0;
+            left: 20px;
+            width: 360px;
+            height: 40px;
+            border-radius: 20px;
+            z-index: 2;
+        }
+        .base-water {
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        /* Left large reservoir */
+        .left-tube {
+            bottom: 30px;
+            left: 40px;
+            width: 100px;
+            height: 250px;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            z-index: 1;
+        }
+
+        /* Right variable capillary tube */
+        .right-tube-wrapper {
+            position: absolute;
+            bottom: 30px;
+            right: 80px;
+            height: 450px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100px; /* fixed bounding box for centering */
+            z-index: 1;
+        }
+
+        .right-tube {
+            height: 100%;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            transition: width 0.3s ease-out;
+            position: relative;
+            overflow: visible;
+        }
+
+        /* Ruler Grid */
+        .ruler {
+            position: absolute;
+            right: -30px;
+            bottom: 0;
+            height: 100%;
+            width: 20px;
+            border-left: 2px solid #64748b;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .ruler-mark {
+            position: absolute;
+            left: 0;
+            width: 10px;
+            height: 1px;
+            background: #64748b;
+        }
+        .ruler-mark.major {
+            width: 15px;
+            background: #334155;
+            height: 2px;
+        }
+
+        /* Particle Animation (for the intro/decor) */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .anim-float { animation: float 4s ease-in-out infinite; }
+
+        /* Custom Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px; width: 24px;
+            border-radius: 50%;
+            background: #0284c7;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: 3px solid white;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 8px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+            border: 1px solid #94a3b8;
+        }
+        input[type=range]:focus { outline: none; }
+    </style>
+</head>
+<body>
+
+    <div id="desk-surface"></div>
+
+    <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
+        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+            <i data-lucide="droplets" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדת זורמים</h1>
+          <p class="text-xs text-slate-500 font-medium m-0">תופעת הנימיות (Capillary Action)</p>
+        </div>
+    </div>
+
+    <main class="w-full h-full relative z-10">
+
+        <div id="screen-intro" class="absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-500" style="background: linear-gradient(135deg, rgba(15,23,42,0.8), rgba(2,132,199,0.8)); backdrop-filter: blur(8px);">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 text-center border border-white/50 m-4 relative z-10">
+                <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i data-lucide="activity" class="w-10 h-10 text-blue-600"></i>
+                </div>
+                <h2 class="text-4xl font-black text-[#0f172a] mb-6">ניסוי: כוח הנימיות בצינורות</h2>
+                <div class="text-right text-slate-700 text-lg leading-relaxed space-y-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <p>האם מים יכולים לטפס למעלה בניגוד לכוח המשיכה?</p>
+                    <p>בניסוי זה נחקור את <strong>תופעת הנימיות (Capillary Action)</strong>. נבדוק כיצד עובי (קוטר) הצינור משפיע על הגובה אליו יצליחו המים לטפס, ונלמד על כוחות הלכידות וההידבקות של המולקולות.</p>
+                </div>
+                <button onclick="app.startSim()" class="btn-primary px-12 py-4 rounded-xl font-bold text-xl shadow-lg inline-flex items-center gap-3 hover:scale-105 transition-transform">
+                    לכניסה למעבדה <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="lab-environment" class="hidden-el w-full h-full absolute inset-0">
+            
+            <div id="tip-slider" class="hidden-el absolute top-[25vh] right-[30%] whitespace-nowrap bg-blue-600 text-white font-extrabold px-4 py-2 rounded-full shadow-xl text-sm animate-bounce pointer-events-none z-30">
+                ← שנו את קוטר הצינור ביומן החקר
+            </div>
+
+            <div class="apparatus-container anim-float">
+                
+                <div class="glass base-pipe">
+                    <div class="water-fill base-water"></div>
+                </div>
+
+                <div class="glass left-tube">
+                    <div class="water-fill" style="height: 120px;">
+                        <div class="meniscus"></div>
+                    </div>
+                </div>
+
+                <div class="right-tube-wrapper">
+                    <div class="glass right-tube" id="tube-capillary" style="width: 60px;">
+                        <div class="water-fill" id="water-capillary" style="height: 120px;">
+                            <div class="meniscus"></div>
+                        </div>
+                    </div>
+                    <div class="ruler" id="ruler-marks">
+                        </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="hud-panel" class="hidden-el absolute top-6 right-6 w-[380px] hud-panel rounded-2xl z-50 flex flex-col transition-shadow duration-300">
+            
+            <div id="hud-header" class="flex justify-between items-center border-b border-slate-200/60 px-6 py-4 bg-slate-50/80 rounded-t-2xl cursor-grab hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-2 pointer-events-none">
+                    <i data-lucide="grip-horizontal" class="text-slate-400 w-5 h-5"></i>
+                    <i data-lucide="clipboard-list" class="text-blue-600 w-6 h-6"></i>
+                    <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן חקר</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="hud-step-badge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-black border border-blue-200 pointer-events-none">שלב 1/2</div>
+                    <button onclick="app.toggleHud(event)" class="p-1.5 hover:bg-slate-200 rounded-lg transition-colors text-slate-700 cursor-pointer">
+                        <i data-lucide="chevron-down" id="icon-chevron-down" class="w-5 h-5 pointer-events-none"></i>
+                        <i data-lucide="chevron-up" id="icon-chevron-up" class="w-5 h-5 pointer-events-none hidden-el"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="hud-content" class="flex flex-col px-6 pb-6 pt-5 overflow-y-auto max-h-[75vh]">
+                
+                <div id="hud-step-1" class="flex flex-col gap-5 animate-fade-in">
+                    <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <span class="font-bold text-blue-600 block mb-1">משימה:</span>
+                        שחקו עם מחוון העובי של הצינור הימני. שימו לב מה קורה לגובה עמודת המים בצינור ככל שהוא נעשה דק יותר.
+                    </p>
+                    
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 text-center shadow-inner">
+                        <label class="block text-sm font-bold text-[#0f172a] mb-4">קוטר הצינור הימני</label>
+                        <input type="range" id="slider-width" min="6" max="60" value="60" oninput="app.updateCapillary(this.value)">
+                        <div class="flex justify-between text-xs font-bold text-slate-500 mt-2">
+                            <span>צר (דק)</span>
+                            <span id="label-width">60 מ"מ</span>
+                            <span>רחב</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <label class="block text-sm font-extrabold text-[#0f172a] mb-2">מסקנה ראשונית:</label>
+                        <p class="text-xs text-slate-600 mb-3 font-medium">מה ההשפעה של הקטנת עובי הצינור על עלית המים כלפי מעלה?</p>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="down" class="w-4 h-4 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold">ככל שהצינור דק יותר, המים יורדים מטה.</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="up" class="w-4 h-4 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold">ככל שהצינור דק יותר, המים עולים גבוה יותר.</span>
+                            </label>
+                            <label class="flex items-center gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q1" value="same" class="w-4 h-4 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold">עובי הצינור אינו משפיע על גובה המים.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="err-step-1" class="hidden-el text-red-500 text-sm font-bold flex items-center gap-2 mt-1 bg-red-50 p-3 rounded-lg border border-red-100">
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span id="err-text-1"></span>
+                    </div>
+                    
+                    <button onclick="app.submitStep1()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">לשלב הבא</button>
+                </div>
+
+                <div id="hud-step-2" class="hidden-el flex flex-col gap-5 animate-fade-in">
+                    <p class="text-sm text-slate-700 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <span class="font-bold text-emerald-600 block mb-1">הסבר פיזיקלי:</span>
+                        המים מטפסים בגלל שילוב של שני כוחות: כוח <strong class="text-blue-600">הידבקות (Adhesion)</strong> לדפנות הזכוכית, וכוח <strong class="text-blue-600">לכידות (Cohesion)</strong> בין מולקולות המים עצמן המושכות זו את זו מעלה.
+                    </p>
+                    
+                    <div class="mt-2">
+                        <label class="block text-sm font-extrabold text-[#0f172a] mb-2">שאלת סיכום:</label>
+                        <p class="text-xs text-slate-600 mb-3 font-medium">מדוע בצינור הצר המים הצליחו לטפס גבוה יותר לעומת הצינור הרחב?</p>
+                        <div class="space-y-2">
+                            <label class="flex items-start gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="wrong1" class="w-4 h-4 mt-0.5 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold leading-snug">כי בצינור צר אין כוח משיכה שפועל על המים.</span>
+                            </label>
+                            <label class="flex items-start gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="correct" class="w-4 h-4 mt-0.5 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold leading-snug">משקל עמודת המים בצינור הצר קטן יותר, ולכן כוחות ההידבקות מצליחים לגבור על כוח המשיכה ולמשוך את המים גבוה יותר.</span>
+                            </label>
+                            <label class="flex items-start gap-3 text-sm cursor-pointer bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-400 transition-colors">
+                                <input type="radio" name="q2" value="wrong2" class="w-4 h-4 mt-0.5 text-blue-600 shrink-0" /> 
+                                <span class="font-semibold leading-snug">מולקולות המים מתכווצות בצינור צר ונדחפות למעלה.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="err-step-2" class="hidden-el text-red-500 text-sm font-bold flex items-center gap-2 mt-1 bg-red-50 p-3 rounded-lg border border-red-100">
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span id="err-text-2"></span>
+                    </div>
+                    
+                    <button onclick="app.finishSim()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg bg-indigo-600 hover:bg-indigo-700">סיים וצפה במסקנות</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="screen-conclusion" class="hidden-el absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 transition-opacity duration-500">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-8 relative overflow-hidden flex flex-col items-center text-center border border-white/20">
+                <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-100 rounded-full opacity-50 pointer-events-none blur-3xl"></div>
+                
+                <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-6 relative z-10 shadow-sm border border-blue-200">
+                    <i data-lucide="award" class="w-12 h-12"></i>
+                </div>
+                
+                <h2 class="text-3xl font-black text-[#0f172a] mb-6 relative z-10">השלמתם את הניסוי בהצלחה!</h2>
+                
+                <div class="w-full bg-slate-50 border border-slate-200 p-6 rounded-2xl relative z-10 text-right space-y-6">
+                    <div>
+                        <h3 class="font-extrabold text-xl text-blue-800 flex items-center gap-2 mb-2">
+                            <i data-lucide="info" class="w-5 h-5"></i> סיכום הכלל הפיזיקלי
+                        </h3>
+                        <p class="text-slate-700 font-medium leading-relaxed text-lg">
+                            ראינו בבירור: <strong>ככל שהצינור דק יותר, המים יעלו בו גבוה יותר</strong>. 
+                            התופעה הזו, הנקראת <em>נימיות (Capillary Action)</em>, מוגבלת בסופו של דבר על ידי משקל הנוזל (כוח הכבידה). לעולם לא נראה את המים מטפסים עד אינסוף; הם ייעצרו כאשר משקל עמודת המים ישתווה לכוח המשיכה הנימי כלפי מעלה.
+                        </p>
+                    </div>
+
+                    <div class="h-px w-full bg-slate-200"></div>
+
+                    <div>
+                        <p class="text-slate-700 font-medium leading-relaxed">
+                            <span class="font-bold text-blue-700 block mb-1">הידעת?</span>
+                            תופעת הנימיות היא זו המאפשרת לצמחים ולעצים עצומים לשאוב מים מהשורשים ועד לצמרות הגבוהות ביותר שלהם דרך צינוריות ה"עצה" הדקיקות שבגזע!
+                        </p>
+                    </div>
+                </div>
+                
+                <button onclick="location.reload()" class="mt-8 bg-[#0f172a] text-white hover:bg-slate-800 font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 relative z-10 flex items-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i> התחילו מחדש
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const app = {
+            state: {
+                step: 0,
+                tubeWidth: 60, // starts wide
+                baseWaterLvl: 120, // fixed equilibrium height in px
+                sliderInteracted: false,
+                hudCollapsed: false
+            },
+
+            init() {
+                lucide.createIcons();
+                this.initDraggableHud();
+                this.buildRuler();
+            },
+
+            // Create ruler tick marks
+            buildRuler() {
+                const ruler = document.getElementById('ruler-marks');
+                for(let i=0; i<=450; i+=10) {
+                    const tick = document.createElement('div');
+                    tick.className = `ruler-mark ${i % 50 === 0 ? 'major' : ''}`;
+                    tick.style.bottom = `${i}px`;
+                    ruler.appendChild(tick);
+                }
+            },
+
+            // --- HUD Drag Logic ---
+            initDraggableHud() {
+                const hud = document.getElementById('hud-panel');
+                const header = document.getElementById('hud-header');
+                
+                let isDragging = false;
+                let currentX = 0, currentY = 0, initialX = 0, initialY = 0;
+                let xOffset = 0, yOffset = 0;
+
+                const dragStart = (e) => {
+                    if (e.target.closest('button') || e.target.closest('input')) return;
+                    
+                    if (e.type === "touchstart") {
+                        initialX = e.touches[0].clientX - xOffset;
+                        initialY = e.touches[0].clientY - yOffset;
+                    } else {
+                        initialX = e.clientX - xOffset;
+                        initialY = e.clientY - yOffset;
+                    }
+                    isDragging = true;
+                    header.classList.replace('cursor-grab', 'cursor-grabbing');
+                };
+
+                const dragEnd = () => {
+                    initialX = currentX;
+                    initialY = currentY;
+                    isDragging = false;
+                    header.classList.replace('cursor-grabbing', 'cursor-grab');
+                };
+
+                const drag = (e) => {
+                    if (isDragging) {
+                        e.preventDefault();
+                        if (e.type === "touchmove") {
+                            currentX = e.touches[0].clientX - initialX;
+                            currentY = e.touches[0].clientY - initialY;
+                        } else {
+                            currentX = e.clientX - initialX;
+                            currentY = e.clientY - initialY;
+                        }
+                        xOffset = currentX;
+                        yOffset = currentY;
+                        hud.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+                    }
+                };
+
+                header.addEventListener('mousedown', dragStart);
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('mousemove', drag);
+                header.addEventListener('touchstart', dragStart, {passive: false});
+                document.addEventListener('touchend', dragEnd);
+                document.addEventListener('touchmove', drag, {passive: false});
+            },
+
+            toggleHud(e) {
+                if(e) e.stopPropagation();
+                this.state.hudCollapsed = !this.state.hudCollapsed;
+                const content = document.getElementById('hud-content');
+                if (this.state.hudCollapsed) {
+                    content.classList.add('hidden-el');
+                    document.getElementById('icon-chevron-down').classList.add('hidden-el');
+                    document.getElementById('icon-chevron-up').classList.remove('hidden-el');
+                } else {
+                    content.classList.remove('hidden-el');
+                    document.getElementById('icon-chevron-down').classList.remove('hidden-el');
+                    document.getElementById('icon-chevron-up').classList.add('hidden-el');
+                }
+            },
+
+            // --- App Logic ---
+            startSim() {
+                document.getElementById('screen-intro').classList.add('opacity-0');
+                setTimeout(() => {
+                    document.getElementById('screen-intro').classList.add('hidden-el');
+                    document.getElementById('lab-environment').classList.remove('hidden-el');
+                    document.getElementById('hud-panel').classList.remove('hidden-el');
+                    document.getElementById('tip-slider').classList.remove('hidden-el');
+                    this.setStep(1);
+                }, 500);
+            },
+
+            setStep(n) {
+                this.state.step = n;
+                document.getElementById('hud-step-badge').innerText = `שלב ${n}/2`;
+                [1,2].forEach(i => {
+                    document.getElementById(`hud-step-${i}`).classList.toggle('hidden-el', n !== i);
+                });
+            },
+
+            updateCapillary(widthVal) {
+                this.state.sliderInteracted = true;
+                document.getElementById('tip-slider').classList.add('hidden-el');
+                
+                this.state.tubeWidth = parseInt(widthVal);
+                document.getElementById('label-width').innerText = `${this.state.tubeWidth} מ"מ`;
+                
+                const tubeDOM = document.getElementById('tube-capillary');
+                const waterDOM = document.getElementById('water-capillary');
+                
+                // Update visual width
+                tubeDOM.style.width = `${this.state.tubeWidth}px`;
+                
+                // Physics calculation: height inversely proportional to diameter (Jurin's law simplified)
+                // H = Base + (k / radius)
+                const k = 1500; // arbitrary constant for visual effect
+                // If width=60, lift = 1500/60 = 25px. Total = 120+25 = 145px
+                // If width=6, lift = 1500/6 = 250px. Total = 120+250 = 370px
+                const capillaryLift = k / this.state.tubeWidth; 
+                let finalHeight = this.state.baseWaterLvl + capillaryLift;
+                
+                // Ensure it maxes out before the top of the tube (450px)
+                if(finalHeight > 420) finalHeight = 420; 
+
+                waterDOM.style.height = `${finalHeight}px`;
+            },
+
+            submitStep1() {
+                const errEl = document.getElementById('err-step-1');
+                const errTxt = document.getElementById('err-text-1');
+                const q1Val = document.querySelector('input[name="q1"]:checked')?.value;
+                
+                if (!this.state.sliderInteracted) {
+                    errTxt.innerText = "אנא שחקו עם המחוון כדי לראות את השפעת עובי הצינור לפני שתמשיכו.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (!q1Val) {
+                    errTxt.innerText = "אנא ענו על שאלת המסקנה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (q1Val !== 'up') {
+                    errTxt.innerText = "לא מדויק. מקדו את המבט בצינור הימני - ככל שהוא נעשה דק (צר) יותר, גובה המים עולה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                
+                errEl.classList.add('hidden-el');
+                this.setStep(2);
+            },
+
+            finishSim() {
+                const errEl = document.getElementById('err-step-2');
+                const errTxt = document.getElementById('err-text-2');
+                const q2Val = document.querySelector('input[name="q2"]:checked')?.value;
+                
+                if (!q2Val) {
+                    errTxt.innerText = "אנא בחרו את ההסבר הנכון.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (q2Val !== 'correct') {
+                    errTxt.innerText = "טעות. כוח המשיכה תמיד פועל! אך בצינור צר משקל עמודת המים קטן, ולכן כוחות ההידבקות מצליחים למשוך את המים למעלה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+
+                errEl.classList.add('hidden-el');
+                document.getElementById('screen-conclusion').classList.remove('hidden-el');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
