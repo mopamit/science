@@ -9,7 +9,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 
     <style>
         body {
@@ -191,7 +191,7 @@
 
     <div class="absolute top-6 left-6 flex items-center gap-3 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-lg border border-white z-50 pointer-events-none">
         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-            <i data-lucide="droplets" class="w-6 h-6"></i>
+            <i data-lucide="droplets" class="w-6 h-6 text-xl font-bold">💧</i> 
         </div>
         <div>
           <h1 class="font-bold text-[#0f172a] text-lg leading-tight m-0">מעבדה</h1>
@@ -201,10 +201,11 @@
 
     <main class="w-full h-full relative z-10">
 
-        <div id="screen-intro" class="absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-500" style="background: linear-gradient(135deg, rgba(15,23,42,0.8), rgba(2,132,199,0.8)); backdrop-filter: blur(8px);">
+        <div id="screen-intro" class="absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-500" style="background: url('c_bg.png') center/cover no-repeat;">
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
             <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 text-center border border-white/50 m-4 relative z-10">
                 <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                    <i data-lucide="activity" class="w-10 h-10 text-blue-600"></i>
+                    <i data-lucide="activity" class="w-10 h-10 text-blue-600 text-3xl">🔬</i> 
                 </div>
                 <h2 class="text-4xl font-black text-[#0f172a] mb-6">ניסוי: כוח הנימיות בצינורות</h2>
                 <div class="text-right text-slate-700 text-lg leading-relaxed space-y-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -253,14 +254,14 @@
             <div id="hud-header" class="flex justify-between items-center border-b border-slate-200/60 px-6 py-4 bg-slate-50/80 rounded-t-2xl cursor-grab hover:bg-slate-100 transition-colors">
                 <div class="flex items-center gap-2 pointer-events-none">
                     <i data-lucide="grip-horizontal" class="text-slate-400 w-5 h-5"></i>
-                    <i data-lucide="clipboard-list" class="text-blue-600 w-6 h-6"></i>
+                    <i data-lucide="clipboard-list" class="text-blue-600 w-6 h-6">📋</i>
                     <h2 class="text-[#0f172a] text-xl font-extrabold m-0">יומן חקר</h2>
                 </div>
                 <div class="flex items-center gap-2">
                     <div id="hud-step-badge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-black border border-blue-200 pointer-events-none">שלב 1/2</div>
                     <button onclick="app.toggleHud(event)" class="p-1.5 hover:bg-slate-200 rounded-lg transition-colors text-slate-700 cursor-pointer">
-                        <i data-lucide="chevron-down" id="icon-chevron-down" class="w-5 h-5 pointer-events-none"></i>
-                        <i data-lucide="chevron-up" id="icon-chevron-up" class="w-5 h-5 pointer-events-none hidden-el"></i>
+                        <i data-lucide="chevron-down" id="icon-chevron-down" class="w-5 h-5 pointer-events-none">▼</i>
+                        <i data-lucide="chevron-up" id="icon-chevron-up" class="w-5 h-5 pointer-events-none hidden-el">▲</i>
                     </button>
                 </div>
             </div>
@@ -303,7 +304,7 @@
                     </div>
 
                     <div id="err-step-1" class="hidden-el text-red-500 text-sm font-bold flex items-center gap-2 mt-1 bg-red-50 p-3 rounded-lg border border-red-100">
-                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span id="err-text-1"></span>
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0">!</i> <span id="err-text-1"></span>
                     </div>
                     
                     <button onclick="app.submitStep1()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg">לשלב הבא</button>
@@ -335,7 +336,7 @@
                     </div>
 
                     <div id="err-step-2" class="hidden-el text-red-500 text-sm font-bold flex items-center gap-2 mt-1 bg-red-50 p-3 rounded-lg border border-red-100">
-                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i> <span id="err-text-2"></span>
+                        <i data-lucide="alert-circle" class="w-5 h-5 shrink-0">!</i> <span id="err-text-2"></span>
                     </div>
                     
                     <button onclick="app.finishSim()" class="btn-primary w-full p-4 rounded-xl font-bold mt-2 text-lg bg-indigo-600 hover:bg-indigo-700">סיים וצפה במסקנות</button>
@@ -349,7 +350,7 @@
                 <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-100 rounded-full opacity-50 pointer-events-none blur-3xl"></div>
                 
                 <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-6 relative z-10 shadow-sm border border-blue-200">
-                    <i data-lucide="award" class="w-12 h-12"></i>
+                    <i data-lucide="award" class="w-12 h-12 text-3xl">🏆</i>
                 </div>
                 
                 <h2 class="text-3xl font-black text-[#0f172a] mb-6 relative z-10">השלמתם את הניסוי בהצלחה!</h2>
@@ -357,7 +358,7 @@
                 <div class="w-full bg-slate-50 border border-slate-200 p-6 rounded-2xl relative z-10 text-right space-y-6">
                     <div>
                         <h3 class="font-extrabold text-xl text-blue-800 flex items-center gap-2 mb-2">
-                            <i data-lucide="info" class="w-5 h-5"></i> סיכום הכלל הפיזיקלי
+                            <i data-lucide="info" class="w-5 h-5">ℹ️</i> סיכום הכלל הפיזיקלי
                         </h3>
                         <p class="text-slate-700 font-medium leading-relaxed text-lg">
                             ראינו בבירור: <strong>ככל שהצינור דק יותר, המים יעלו בו גבוה יותר</strong>. 
@@ -377,7 +378,7 @@
                 </div>
                 
                 <button onclick="location.reload()" class="mt-8 bg-[#0f172a] text-white hover:bg-slate-800 font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 relative z-10 flex items-center gap-2">
-                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i> התחילו מחדש
+                    <i data-lucide="rotate-ccw" class="w-5 h-5">🔄</i> התחילו מחדש
                 </button>
             </div>
         </div>
@@ -385,5 +386,224 @@
     </main>
 
     <script>
-        const app = {
-            state:
+        // Make the app object completely global so inline HTML events can always find it
+        window.app = {
+            state: {
+                step: 0,
+                tubeWidth: 60, // starts wide
+                baseWaterLvl: 120, // fixed equilibrium height in px
+                sliderInteracted: false,
+                hudCollapsed: false
+            },
+
+            init() {
+                // Safely load icons if the network allowed the script to download
+                if (typeof lucide !== 'undefined') {
+                    try {
+                        lucide.createIcons();
+                    } catch(e) { console.warn("Icons setup failed", e); }
+                } else {
+                    console.warn("Lucide icons library was blocked by network. Fallback UI will be shown.");
+                }
+
+                this.initDraggableHud();
+                this.buildRuler();
+            },
+
+            // Create ruler tick marks
+            buildRuler() {
+                const ruler = document.getElementById('ruler-marks');
+                
+                // Add unit label at the top
+                const unitLabel = document.createElement('div');
+                unitLabel.innerText = "ס״מ";
+                unitLabel.style.position = 'absolute';
+                unitLabel.style.left = '10px';
+                unitLabel.style.top = '-25px';
+                unitLabel.style.fontSize = '13px';
+                unitLabel.style.fontWeight = 'bold';
+                unitLabel.style.color = '#0f172a';
+                ruler.appendChild(unitLabel);
+
+                for(let i=0; i<=480; i+=10) {
+                    const tick = document.createElement('div');
+                    tick.className = `ruler-mark ${i % 50 === 0 ? 'major' : ''}`;
+                    tick.style.bottom = `${i}px`;
+                    
+                    if (i % 50 === 0) {
+                        const num = document.createElement('span');
+                        num.innerText = i / 10; // Convert pixels to our 'cm' scale
+                        num.style.position = 'absolute';
+                        num.style.left = '18px';
+                        num.style.top = '-8px';
+                        num.style.fontSize = '12px';
+                        num.style.fontWeight = 'bold';
+                        num.style.color = '#0f172a';
+                        num.style.fontFamily = 'monospace';
+                        tick.appendChild(num);
+                    }
+
+                    ruler.appendChild(tick);
+                }
+            },
+
+            // --- HUD Drag Logic ---
+            initDraggableHud() {
+                const hud = document.getElementById('hud-panel');
+                const header = document.getElementById('hud-header');
+                
+                let isDragging = false;
+                let currentX = 0, currentY = 0, initialX = 0, initialY = 0;
+                let xOffset = 0, yOffset = 0;
+
+                const dragStart = (e) => {
+                    if (e.target.closest('button') || e.target.closest('input')) return;
+                    
+                    if (e.type === "touchstart") {
+                        initialX = e.touches[0].clientX - xOffset;
+                        initialY = e.touches[0].clientY - yOffset;
+                    } else {
+                        initialX = e.clientX - xOffset;
+                        initialY = e.clientY - yOffset;
+                    }
+                    isDragging = true;
+                    header.classList.replace('cursor-grab', 'cursor-grabbing');
+                };
+
+                const dragEnd = () => {
+                    initialX = currentX;
+                    initialY = currentY;
+                    isDragging = false;
+                    header.classList.replace('cursor-grabbing', 'cursor-grab');
+                };
+
+                const drag = (e) => {
+                    if (isDragging) {
+                        e.preventDefault();
+                        if (e.type === "touchmove") {
+                            currentX = e.touches[0].clientX - initialX;
+                            currentY = e.touches[0].clientY - initialY;
+                        } else {
+                            currentX = e.clientX - initialX;
+                            currentY = e.clientY - initialY;
+                        }
+                        xOffset = currentX;
+                        yOffset = currentY;
+                        hud.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+                    }
+                };
+
+                header.addEventListener('mousedown', dragStart);
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('mousemove', drag);
+                header.addEventListener('touchstart', dragStart, {passive: false});
+                document.addEventListener('touchend', dragEnd);
+                document.addEventListener('touchmove', drag, {passive: false});
+            },
+
+            toggleHud(e) {
+                if(e) e.stopPropagation();
+                this.state.hudCollapsed = !this.state.hudCollapsed;
+                const content = document.getElementById('hud-content');
+                if (this.state.hudCollapsed) {
+                    content.classList.add('hidden-el');
+                    document.getElementById('icon-chevron-down').classList.add('hidden-el');
+                    document.getElementById('icon-chevron-up').classList.remove('hidden-el');
+                } else {
+                    content.classList.remove('hidden-el');
+                    document.getElementById('icon-chevron-down').classList.remove('hidden-el');
+                    document.getElementById('icon-chevron-up').classList.add('hidden-el');
+                }
+            },
+
+            // --- App Logic ---
+            startSim() {
+                document.getElementById('screen-intro').classList.add('opacity-0');
+                setTimeout(() => {
+                    document.getElementById('screen-intro').classList.add('hidden-el');
+                    document.getElementById('lab-environment').classList.remove('hidden-el');
+                    document.getElementById('hud-panel').classList.remove('hidden-el');
+                    document.getElementById('tip-slider').classList.remove('hidden-el');
+                    this.setStep(1);
+                }, 500);
+            },
+
+            setStep(n) {
+                this.state.step = n;
+                document.getElementById('hud-step-badge').innerText = `שלב ${n}/2`;
+                [1,2].forEach(i => {
+                    document.getElementById(`hud-step-${i}`).classList.toggle('hidden-el', n !== i);
+                });
+            },
+
+            updateCapillary(widthVal) {
+                this.state.sliderInteracted = true;
+                document.getElementById('tip-slider').classList.add('hidden-el');
+                
+                this.state.tubeWidth = parseInt(widthVal);
+                document.getElementById('label-width').innerText = `${this.state.tubeWidth} מ"מ`;
+                
+                const tubeDOM = document.getElementById('tube-capillary');
+                const waterDOM = document.getElementById('water-capillary');
+                
+                // Update visual width
+                tubeDOM.style.width = `${this.state.tubeWidth}px`;
+                
+                // Physics calculation
+                const k = 2000; // Constant to match the 50cm story
+                const capillaryLift = k / this.state.tubeWidth; 
+                let finalHeight = this.state.baseWaterLvl + capillaryLift;
+                
+                // Ensure it maxes out before the top of the tube
+                if(finalHeight > 480) finalHeight = 480; 
+
+                waterDOM.style.height = `${finalHeight}px`;
+            },
+
+            submitStep1() {
+                const errEl = document.getElementById('err-step-1');
+                const errTxt = document.getElementById('err-text-1');
+                const q1Val = document.querySelector('input[name="q1"]:checked')?.value;
+                
+                if (!this.state.sliderInteracted) {
+                    errTxt.innerText = "אנא שחקו עם המחוון כדי לראות את השפעת עובי הצינור לפני שתמשיכו.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (!q1Val) {
+                    errTxt.innerText = "אנא ענו על שאלת המסקנה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (q1Val !== 'up') {
+                    errTxt.innerText = "לא מדויק. מקדו את המבט בצינור הימני - ככל שהוא נעשה דק (צר) יותר, גובה המים עולה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                
+                errEl.classList.add('hidden-el');
+                this.setStep(2);
+            },
+
+            finishSim() {
+                const errEl = document.getElementById('err-step-2');
+                const errTxt = document.getElementById('err-text-2');
+                const q2Val = document.querySelector('input[name="q2"]:checked')?.value;
+                
+                if (!q2Val) {
+                    errTxt.innerText = "אנא בחרו את ההסבר הנכון.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+                if (q2Val !== 'correct') {
+                    errTxt.innerText = "טעות. כוח המשיכה תמיד פועל! אך בצינור צר משקל עמודת המים קטן, ולכן כוחות ההידבקות מצליחים למשוך את המים למעלה.";
+                    errEl.classList.remove('hidden-el'); return;
+                }
+
+                errEl.classList.add('hidden-el');
+                document.getElementById('screen-conclusion').classList.remove('hidden-el');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.app.init();
+        });
+    </script>
+</body>
+</html>
